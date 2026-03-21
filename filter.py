@@ -5,10 +5,11 @@ filter.py – keeps only articles relevant to seniors and SMBs in Ontario, Canad
 import re
 from typing import Iterable
 
-from config import ALL_KEYWORDS, MAX_ARTICLES
+from config import ALL_KEYWORDS, MAX_ARTICLES, SENIOR_KEYWORDS
 
 # Pre-compile keyword patterns for speed
 _PATTERNS = [re.compile(re.escape(kw), re.IGNORECASE) for kw in ALL_KEYWORDS]
+_SENIOR_PATTERNS = [re.compile(re.escape(kw), re.IGNORECASE) for kw in SENIOR_KEYWORDS]
 
 
 def _text_matches(text: str, patterns: list[re.Pattern]) -> bool:
@@ -49,5 +50,10 @@ def filter_articles(
 
     Articles are assumed to arrive newest-first (as produced by scraper.py).
     """
-    relevant = [a for a in articles if is_relevant(a, patterns)]
+    # Senior relevance is mandatory for inclusion.
+    relevant = [
+        a
+        for a in articles
+        if is_relevant(a, patterns) and is_relevant(a, _SENIOR_PATTERNS)
+    ]
     return relevant[:max_articles]

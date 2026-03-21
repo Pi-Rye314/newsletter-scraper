@@ -67,18 +67,31 @@ def test_filter_articles_keeps_relevant_articles():
     ]
     result = filter_articles(articles)
     titles = [a["title"] for a in result]
-    assert "Ontario entrepreneur wins award" in titles
     assert "Telemedicine for seniors in Canada" in titles
+    assert "Ontario entrepreneur wins award" not in titles
     assert "New gaming console released" not in titles
 
 
 def test_filter_articles_respects_max_articles():
     articles = [
-        _article(title=f"Ontario SMB news {i}", url=f"https://example.com/{i}")
+        _article(title=f"Ontario seniors SMB news {i}", url=f"https://example.com/{i}")
         for i in range(50)
     ]
     result = filter_articles(articles, max_articles=5)
     assert len(result) == 5
+
+
+def test_filter_articles_requires_senior_relevance():
+    articles = [
+        _article(title="Ontario SMB grant update", url="https://example.com/1"),
+        _article(title="Accessibility tools for seniors in Ontario", url="https://example.com/2"),
+        _article(title="Cloud accounting for small business", url="https://example.com/3"),
+    ]
+
+    result = filter_articles(articles, max_articles=2)
+    titles = [a["title"] for a in result]
+
+    assert titles == ["Accessibility tools for seniors in Ontario"]
 
 
 def test_filter_articles_returns_empty_when_nothing_relevant():
