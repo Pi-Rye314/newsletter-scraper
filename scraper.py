@@ -17,12 +17,12 @@ def _parse_date(entry: feedparser.FeedParserDict) -> Optional[datetime]:
     """Return a timezone-aware datetime from a parsed feed entry, or None."""
     if hasattr(entry, "published_parsed") and entry.published_parsed:
         try:
-            return datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+            return datetime(*[int(x) for x in entry.published_parsed[:6]], tzinfo=timezone.utc)  # type: ignore
         except (TypeError, ValueError):
             pass
     if hasattr(entry, "updated_parsed") and entry.updated_parsed:
         try:
-            return datetime(*entry.updated_parsed[:6], tzinfo=timezone.utc)
+            return datetime(*[int(x) for x in entry.updated_parsed[:6]], tzinfo=timezone.utc)  # type: ignore
         except (TypeError, ValueError):
             pass
     return None
