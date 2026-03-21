@@ -22,6 +22,8 @@ htmlcov/
 # Output
 output/
 *.html
+# Keep the Jinja2 HTML template
+!templates/*.html
 
 # IDE
 .idea/

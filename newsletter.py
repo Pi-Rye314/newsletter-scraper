@@ -2,7 +2,6 @@
 newsletter.py – renders a list of filtered articles into an HTML newsletter.
 """
 
-import os
 from datetime import date
 from pathlib import Path
 
@@ -58,7 +57,7 @@ def render_newsletter(
     html = template.render(
         title=title,
         subtitle=subtitle,
-        edition_date=edition_date.strftime("%B %d, %Y").replace(" 0", " "),
+        edition_date=edition_date.strftime(f"%B {edition_date.day}, %Y"),
         articles=articles_by_source,
     )
     return html
