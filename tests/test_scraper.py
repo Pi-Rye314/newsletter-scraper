@@ -5,6 +5,8 @@ Tests for scraper.py
 import sys
 import os
 from datetime import datetime, timezone
+from io import BytesIO
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -12,6 +14,16 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from scraper import _parse_date, fetch_feed, fetch_all_feeds
+
+
+def _urlopen_mock(data: bytes = b"<rss/>"):
+    """Return a context-manager mock for urllib.request.urlopen."""
+    @contextmanager
+    def _mgr(*args, **kwargs):
+        resp = MagicMock()
+        resp.read.return_value = data
+        yield resp
+    return _mgr
 
 
 # ── _parse_date ──────────────────────────────────────────────────────────────
@@ -79,7 +91,8 @@ def test_fetch_feed_returns_articles():
     )
     mock_feed = _make_parsed_feed([entry])
 
-    with patch("scraper.feedparser.parse", return_value=mock_feed):
+    with patch("scraper.urllib.request.urlopen", _urlopen_mock()), \
+         patch("scraper.feedparser.parse", return_value=mock_feed):
         articles = fetch_feed({"name": "Test Feed", "url": "https://example.com/feed"})
 
     assert len(articles) == 1
@@ -94,7 +107,8 @@ def test_fetch_feed_skips_entries_without_title_or_link():
     entry_no_link = _make_feed_entry(title="No Link Article", link="")
     mock_feed = _make_parsed_feed([entry_ok, entry_no_title, entry_no_link])
 
-    with patch("scraper.feedparser.parse", return_value=mock_feed):
+    with patch("scraper.urllib.request.urlopen", _urlopen_mock()), \
+         patch("scraper.feedparser.parse", return_value=mock_feed):
         articles = fetch_feed({"name": "Feed", "url": "https://example.com/feed"})
 
     assert len(articles) == 1
@@ -106,8 +120,21 @@ def test_fetch_feed_returns_empty_on_bozo_with_no_entries():
     mock_feed.bozo = True
     mock_feed.entries = []
 
-    with patch("scraper.feedparser.parse", return_value=mock_feed):
+    with patch("scraper.urllib.request.urlopen", _urlopen_mock()), \
+         patch("scraper.feedparser.parse", return_value=mock_feed):
         articles = fetch_feed({"name": "Bad Feed", "url": "https://example.com/bad"})
+
+    assert articles == []
+
+
+def test_fetch_feed_returns_empty_on_network_error():
+    import socket
+
+    def _raise(*args, **kwargs):
+        raise socket.timeout("timed out")
+
+    with patch("scraper.urllib.request.urlopen", _raise):
+        articles = fetch_feed({"name": "Slow Feed", "url": "https://example.com/slow"})
 
     assert articles == []
 
@@ -123,7 +150,8 @@ def test_fetch_all_feeds_deduplicates():
         {"name": "Feed B", "url": "https://b.com/feed"},
     ]
 
-    with patch("scraper.feedparser.parse", return_value=mock_feed):
+    with patch("scraper.urllib.request.urlopen", _urlopen_mock()), \
+         patch("scraper.feedparser.parse", return_value=mock_feed):
         articles = fetch_all_feeds(feeds)
 
     assert len(articles) == 1
@@ -140,7 +168,8 @@ def test_fetch_all_feeds_sorts_newest_first():
     )
     mock_feed = _make_parsed_feed([entry1, entry2])
 
-    with patch("scraper.feedparser.parse", return_value=mock_feed):
+    with patch("scraper.urllib.request.urlopen", _urlopen_mock()), \
+         patch("scraper.feedparser.parse", return_value=mock_feed):
         articles = fetch_all_feeds([{"name": "F", "url": "https://example.com/feed"}])
 
     assert articles[0]["title"] == "Newer"

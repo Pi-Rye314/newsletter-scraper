@@ -3,12 +3,16 @@ scraper.py – fetches and parses RSS feeds into a list of article dicts.
 """
 
 import logging
+import urllib.request
 from datetime import datetime, timezone
 from typing import Optional
 
 import feedparser
 
 from config import RSS_FEEDS
+
+# Hard timeout (seconds) for each individual feed HTTP request.
+_FEED_TIMEOUT = 10
 
 logger = logging.getLogger(__name__)
 
@@ -17,12 +21,12 @@ def _parse_date(entry: feedparser.FeedParserDict) -> Optional[datetime]:
     """Return a timezone-aware datetime from a parsed feed entry, or None."""
     if hasattr(entry, "published_parsed") and entry.published_parsed:
         try:
-            return datetime(*[int(x) for x in entry.published_parsed[:6]], tzinfo=timezone.utc)  # type: ignore
+            return datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
         except (TypeError, ValueError):
             pass
     if hasattr(entry, "updated_parsed") and entry.updated_parsed:
         try:
-            return datetime(*[int(x) for x in entry.updated_parsed[:6]], tzinfo=timezone.utc)  # type: ignore
+            return datetime(*entry.updated_parsed[:6], tzinfo=timezone.utc)
         except (TypeError, ValueError):
             pass
     return None
@@ -44,7 +48,14 @@ def fetch_feed(feed_config: dict) -> list[dict]:
     articles = []
 
     try:
-        parsed = feedparser.parse(url)
+        try:
+            with urllib.request.urlopen(url, timeout=_FEED_TIMEOUT) as response:
+                raw = response.read()
+        except Exception as exc:
+            logger.warning("Could not fetch feed '%s' (%s): %s", name, url, exc)
+            return articles
+
+        parsed = feedparser.parse(raw)
         if parsed.bozo and not parsed.entries:
             logger.warning("Feed '%s' returned a malformed response: %s", name, url)
             return articles
