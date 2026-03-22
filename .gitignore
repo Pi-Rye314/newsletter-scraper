@@ -31,17 +31,8 @@ output/
 *.swp
 *.swo
 
-# Local scratch/debug artifacts
-dev_artifacts/
-tmp_*.py
-tmp_*.txt
-marker_*.txt
-*_smoke.txt
-main_live.log
-from_script.txt
-*.code-workspace
-
 # Local artifacts / scratch
 dev_artifacts/
 *.log
 tmp_*
+*.txt
