@@ -5,20 +5,28 @@ Defines RSS feed sources and keyword filters focused on tech news
 relevant to seniors and small/medium businesses (SMBs) in Ontario, Canada.
 """
 
-# RSS feed URLs – tech, business, and Canadian news sources
+# RSS feed URLs – senior-focused, Canadian, and broad tech sources.
+# Dead/blocked feeds removed 2026-03-21:
+#   CBC Technology / CBC Business  – consistent read timeouts
+#   Toronto Star Business           – malformed feed response
+#   Ontario Business Report         – HTTP 404 (domain gone)
+#   Wired                           – HTTP 403 (blocks scrapers)
 RSS_FEEDS = [
-    # Canadian / Ontario business and tech
-    {"name": "CBC Technology", "url": "https://www.cbc.ca/cmlink/rss-technology"},
-    {"name": "CBC Business", "url": "https://www.cbc.ca/cmlink/rss-business"},
+    # Canadian seniors & health – primary audience feeds
+    {"name": "CARP",              "url": "https://www.carp.ca/feed/"},
+    {"name": "CBC Health",        "url": "https://www.cbc.ca/cmlink/rss-health"},
+    {"name": "Ontario Government News", "url": "https://news.ontario.ca/en/rss"},
+
+    # North American seniors – high-volume, keyword-rich content
+    {"name": "AARP News",         "url": "https://www.aarp.org/rss/news/"},
+    {"name": "NIA (Nat. Institute on Aging)", "url": "https://www.nia.nih.gov/rss/all-news"},
+
+    # Working tech / business feeds kept from original list
     {"name": "Globe and Mail Business", "url": "https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business/"},
-    {"name": "Toronto Star Business", "url": "https://www.thestar.com/content/thestar/feed.RSSManagerServlet.articles.business.rss"},
-    {"name": "Ontario Business Report", "url": "https://ontariobusiness.ca/feed/"},
-    # Broad tech – curated for accessibility and SMB relevance
-    {"name": "TechCrunch", "url": "https://techcrunch.com/feed/"},
-    {"name": "Wired", "url": "https://www.wired.com/feed/rss"},
-    {"name": "CNET", "url": "https://www.cnet.com/rss/news/"},
+    {"name": "TechCrunch",        "url": "https://techcrunch.com/feed/"},
+    {"name": "CNET",              "url": "https://www.cnet.com/rss/news/"},
     {"name": "MIT Technology Review", "url": "https://www.technologyreview.com/feed/"},
-    {"name": "Ars Technica", "url": "https://feeds.arstechnica.com/arstechnica/index"},
+    {"name": "Ars Technica",      "url": "https://feeds.arstechnica.com/arstechnica/index"},
 ]
 
 # Keywords that make an article relevant to the target audience.
