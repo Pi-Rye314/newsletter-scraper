@@ -10,13 +10,31 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from filter import is_relevant, filter_articles
+from filter import is_relevant, filter_articles, _is_fresh
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _article(title="", summary="", source="Test Feed", url="https://example.com/1"):
-    return {"title": title, "summary": summary, "source": source, "url": url, "published": None}
+def _article(title="", summary="", source="Test Feed", url="https://example.com/1", published=None):
+    return {"title": title, "summary": summary, "source": source, "url": url, "published": published}
+
+
+# ── _is_fresh ────────────────────────────────────────────────────────────────
+
+def test_is_fresh_allows_undated_article():
+    assert _is_fresh(_article()) is True
+
+
+def test_is_fresh_allows_recent_article():
+    from datetime import datetime, timedelta, timezone
+    recent = datetime.now(tz=timezone.utc) - timedelta(days=3)
+    assert _is_fresh(_article(published=recent)) is True
+
+
+def test_is_fresh_drops_stale_article():
+    from datetime import datetime, timedelta, timezone
+    old = datetime.now(tz=timezone.utc) - timedelta(days=30)
+    assert _is_fresh(_article(published=old)) is False
 
 
 # ── is_relevant ───────────────────────────────────────────────────────────────
@@ -63,18 +81,25 @@ def test_filter_articles_keeps_relevant_articles():
     articles = [
         _article(title="Ontario entrepreneur wins award"),
         _article(title="New gaming console released"),
+        # senior + Ontario keyword → kept
         _article(title="Telemedicine for seniors in Canada"),
+        # senior but no Ontario keyword, not a trusted senior feed → dropped
+        _article(title="Telemedicine for seniors worldwide", source="Test Feed"),
+        # senior + trusted feed source → kept even without Ontario keyword
+        _article(title="Retirement planning tips", source="CARP"),
     ]
     result = filter_articles(articles)
     titles = [a["title"] for a in result]
     assert "Telemedicine for seniors in Canada" in titles
+    assert "Retirement planning tips" in titles
     assert "Ontario entrepreneur wins award" not in titles
     assert "New gaming console released" not in titles
+    assert "Telemedicine for seniors worldwide" not in titles
 
 
 def test_filter_articles_respects_max_articles():
     articles = [
-        _article(title=f"Ontario seniors SMB news {i}", url=f"https://example.com/{i}")
+        _article(title=f"Ontario seniors SMB news {i}", source="CARP", url=f"https://example.com/{i}")
         for i in range(50)
     ]
     result = filter_articles(articles, max_articles=5)
@@ -84,14 +109,44 @@ def test_filter_articles_respects_max_articles():
 def test_filter_articles_requires_senior_relevance():
     articles = [
         _article(title="Ontario SMB grant update", url="https://example.com/1"),
+        # senior + Ontario keyword → kept
         _article(title="Accessibility tools for seniors in Ontario", url="https://example.com/2"),
         _article(title="Cloud accounting for small business", url="https://example.com/3"),
     ]
 
-    result = filter_articles(articles, max_articles=2)
+    result = filter_articles(articles, max_articles=5)
     titles = [a["title"] for a in result]
 
     assert titles == ["Accessibility tools for seniors in Ontario"]
+
+
+def test_filter_articles_drops_stale_articles():
+    from datetime import datetime, timedelta, timezone
+    old = datetime.now(tz=timezone.utc) - timedelta(days=30)
+    articles = [
+        # stale from a general feed → dropped
+        _article(title="Ontario seniors retirement news", source="Test Feed", url="https://example.com/1", published=old),
+        # stale from a trusted senior feed → kept (freshness waived)
+        _article(title="Retirement planning for retirees", source="CARP", url="https://example.com/2", published=old),
+        # undated from a general feed → kept (no date ⇒ treated as fresh)
+        _article(title="Ontario seniors retirement news", source="Test Feed", url="https://example.com/3", published=None),
+    ]
+    result = filter_articles(articles)
+    urls = [a["url"] for a in result]
+    assert "https://example.com/1" not in urls
+    assert "https://example.com/2" in urls
+    assert "https://example.com/3" in urls
+
+
+def test_filter_articles_word_boundary_prevents_false_match():
+    # "scheme" contains "sme" as substring - should NOT match \bsme\b
+    article = _article(title="New colour scheme for Ontario government", summary="Design scheme update.")
+    assert is_relevant(article) is True  # "Ontario" still matches via ONTARIO_KEYWORDS
+    # But a pure SME substring in an unrelated word shouldn't be the trigger
+    from filter import _make_patterns
+    sme_only = _make_patterns(["sme"])
+    article_scheme = _article(title="New colour scheme", summary="Design scheme update.")
+    assert is_relevant(article_scheme, patterns=sme_only) is False
 
 
 def test_filter_articles_returns_empty_when_nothing_relevant():
