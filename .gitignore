@@ -21,7 +21,7 @@ htmlcov/
 
 # Output
 output/
-*.html
+output_live/
 # Keep the Jinja2 HTML template
 !templates/*.html
 
@@ -35,4 +35,7 @@ output/
 dev_artifacts/
 *.log
 tmp_*
-*.txt
+marker_*.txt
+*_smoke.txt
+from_script.txt
+live_run_status.txt
