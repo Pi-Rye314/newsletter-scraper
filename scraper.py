@@ -7,9 +7,9 @@ import re
 import urllib.request
 from datetime import datetime, timezone
 from html import unescape
-from typing import Optional
+from typing import Any, Optional
 
-import feedparser
+import feedparser  # type: ignore[import-not-found]
 
 from config import RSS_FEEDS
 
@@ -35,22 +35,22 @@ def _clean_text(value: str) -> str:
     return text
 
 
-def _parse_date(entry: feedparser.FeedParserDict) -> Optional[datetime]:
+def _parse_date(entry: Any) -> Optional[datetime]:  # feedparser.FeedParserDict lacks stubs
     """Return a timezone-aware datetime from a parsed feed entry, or None."""
-    if hasattr(entry, "published_parsed") and entry.published_parsed:
+    if hasattr(entry, "published_parsed") and entry.published_parsed:  # type: ignore[attr-defined]
         try:
-            return datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+            return datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)  # type: ignore[attr-defined]
         except (TypeError, ValueError):
             pass
-    if hasattr(entry, "updated_parsed") and entry.updated_parsed:
+    if hasattr(entry, "updated_parsed") and entry.updated_parsed:  # type: ignore[attr-defined]
         try:
-            return datetime(*entry.updated_parsed[:6], tzinfo=timezone.utc)
+            return datetime(*entry.updated_parsed[:6], tzinfo=timezone.utc)  # type: ignore[attr-defined]
         except (TypeError, ValueError):
             pass
     return None
 
 
-def fetch_feed(feed_config: dict) -> list[dict]:
+def fetch_feed(feed_config: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Fetch a single RSS feed and return a list of normalised article dicts.
 
@@ -63,7 +63,7 @@ def fetch_feed(feed_config: dict) -> list[dict]:
     """
     name = feed_config.get("name", "Unknown")
     url = feed_config.get("url", "")
-    articles = []
+    articles: list[dict[str, Any]] = []
 
     try:
         try:
@@ -77,18 +77,18 @@ def fetch_feed(feed_config: dict) -> list[dict]:
             logger.warning("Could not fetch feed '%s' (%s): %s", name, url, exc)
             return articles
 
-        parsed = feedparser.parse(raw)
-        if parsed.bozo and not parsed.entries:
+        parsed = feedparser.parse(raw)  # type: ignore[attr-defined]
+        if parsed.bozo and not parsed.entries:  # type: ignore[attr-defined]
             logger.warning("Feed '%s' returned a malformed response: %s", name, url)
             return articles
 
-        for entry in parsed.entries:
-            title = _clean_text(getattr(entry, "title", ""))
-            link = getattr(entry, "link", "").strip()
+        for entry in parsed.entries:  # type: ignore[attr-defined]
+            title = _clean_text(getattr(entry, "title", ""))  # type: ignore[arg-type]
+            link = getattr(entry, "link", "").strip()  # type: ignore[arg-type]
             # Prefer the full content summary; fall back to description
             summary = _clean_text(
-                getattr(entry, "summary", "")
-                or getattr(entry, "description", "")
+                getattr(entry, "summary", "")  # type: ignore[arg-type]
+                or getattr(entry, "description", "")  # type: ignore[arg-type]
             )
             published = _parse_date(entry)
 
@@ -112,15 +112,15 @@ def fetch_feed(feed_config: dict) -> list[dict]:
     return articles
 
 
-def fetch_all_feeds(feeds: list[dict] | None = None) -> list[dict]:
+def fetch_all_feeds(feeds: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:  # type: ignore[misc]
     """
     Fetch every feed in *feeds* (defaults to RSS_FEEDS from config) and
     return a combined, deduplicated list of article dicts sorted newest-first.
     """
     if feeds is None:
-        feeds = RSS_FEEDS
+        feeds = RSS_FEEDS  # type: ignore[assignment]
 
-    all_articles: list[dict] = []
+    all_articles: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
 
     for feed_config in feeds:
