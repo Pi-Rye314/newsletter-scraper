@@ -11,15 +11,24 @@ relevant to seniors and small/medium businesses (SMBs) in Ontario, Canada.
 #   Toronto Star Business           – malformed feed response
 #   Ontario Business Report         – HTTP 404 (domain gone)
 #   Wired                           – HTTP 403 (blocks scrapers)
+# Second-pass removals 2026-03-21:
+#   CBC Health                      – read timeout
+#   Ontario Government News         – malformed XML
+#   AARP News                       – HTTP 404 (URL changed)
+#   NIA                             – HTTP 405 (no GET on feed endpoint)
+# Third-pass removals 2026-03-21:
+#   ScienceDaily Aging              – HTTP 404 (feed path removed)
+#   NCOA                            – HTTP 404 (no RSS endpoint)
+#   McKnight's Senior Living        – HTTP 302 redirect loop
 RSS_FEEDS = [
     # Canadian seniors & health – primary audience feeds
     {"name": "CARP",              "url": "https://www.carp.ca/feed/"},
-    {"name": "CBC Health",        "url": "https://www.cbc.ca/cmlink/rss-health"},
-    {"name": "Ontario Government News", "url": "https://news.ontario.ca/en/rss"},
+    {"name": "Healthy Debate",    "url": "https://healthydebate.ca/feed/"},
+    {"name": "Retire Happy",       "url": "https://www.retirehappy.ca/feed/"},
 
     # North American seniors – high-volume, keyword-rich content
-    {"name": "AARP News",         "url": "https://www.aarp.org/rss/news/"},
-    {"name": "NIA (Nat. Institute on Aging)", "url": "https://www.nia.nih.gov/rss/all-news"},
+    {"name": "LeadingAge",         "url": "https://leadingage.org/feed/"},
+    {"name": "AgingInPlace.com",   "url": "https://www.aginginplace.com/feed/"},
 
     # Working tech / business feeds kept from original list
     {"name": "Globe and Mail Business", "url": "https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business/"},
@@ -93,7 +102,7 @@ ONTARIO_KEYWORDS = [
 ALL_KEYWORDS = SENIOR_KEYWORDS + SMB_KEYWORDS + ONTARIO_KEYWORDS
 
 # Maximum number of articles to include in a single newsletter
-MAX_ARTICLES = 20
+MAX_ARTICLES = 30
 
 # Newsletter metadata
 NEWSLETTER_TITLE = "Ontario Tech Digest"

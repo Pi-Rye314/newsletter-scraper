@@ -49,7 +49,11 @@ def fetch_feed(feed_config: dict) -> list[dict]:
 
     try:
         try:
-            with urllib.request.urlopen(url, timeout=_FEED_TIMEOUT) as response:
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; NewsletterBot/1.0; +https://github.com/Pi-Rye314/newsletter-scraper)"},
+            )
+            with urllib.request.urlopen(req, timeout=_FEED_TIMEOUT) as response:
                 raw = response.read()
         except Exception as exc:
             logger.warning("Could not fetch feed '%s' (%s): %s", name, url, exc)
