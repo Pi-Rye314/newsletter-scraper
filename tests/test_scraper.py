@@ -115,6 +115,23 @@ def test_fetch_feed_skips_entries_without_title_or_link():
     assert articles[0]["title"] == "Good Article"
 
 
+def test_fetch_feed_sanitizes_html_fields():
+    entry = _make_feed_entry(
+        title="<em>Senior</em> Alert",
+        link="https://example.com/clean",
+        summary="<p>New&nbsp;<strong>program</strong>\x08 for retirees.</p>",
+    )
+    mock_feed = _make_parsed_feed([entry])
+
+    with patch("scraper.urllib.request.urlopen", _urlopen_mock()), \
+         patch("scraper.feedparser.parse", return_value=mock_feed):
+        articles = fetch_feed({"name": "Feed", "url": "https://example.com/feed"})
+
+    assert len(articles) == 1
+    assert articles[0]["title"] == "Senior Alert"
+    assert articles[0]["summary"] == "New program for retirees."
+
+
 def test_fetch_feed_returns_empty_on_bozo_with_no_entries():
     mock_feed = MagicMock()
     mock_feed.bozo = True

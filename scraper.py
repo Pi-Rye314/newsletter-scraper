@@ -3,8 +3,10 @@ scraper.py – fetches and parses RSS feeds into a list of article dicts.
 """
 
 import logging
+import re
 import urllib.request
 from datetime import datetime, timezone
+from html import unescape
 from typing import Optional
 
 import feedparser
@@ -15,6 +17,22 @@ from config import RSS_FEEDS
 _FEED_TIMEOUT = 10
 
 logger = logging.getLogger(__name__)
+
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+_CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]")
+_WHITESPACE_RE = re.compile(r"\s+")
+
+
+def _clean_text(value: str) -> str:
+    """Return plain text safe for HTML rendering from messy feed fields."""
+    if not value:
+        return ""
+
+    text = unescape(str(value))
+    text = _HTML_TAG_RE.sub(" ", text)
+    text = _CONTROL_CHAR_RE.sub("", text)
+    text = _WHITESPACE_RE.sub(" ", text).strip()
+    return text
 
 
 def _parse_date(entry: feedparser.FeedParserDict) -> Optional[datetime]:
@@ -65,13 +83,13 @@ def fetch_feed(feed_config: dict) -> list[dict]:
             return articles
 
         for entry in parsed.entries:
-            title = getattr(entry, "title", "").strip()
+            title = _clean_text(getattr(entry, "title", ""))
             link = getattr(entry, "link", "").strip()
             # Prefer the full content summary; fall back to description
-            summary = (
+            summary = _clean_text(
                 getattr(entry, "summary", "")
                 or getattr(entry, "description", "")
-            ).strip()
+            )
             published = _parse_date(entry)
 
             if not title or not link:

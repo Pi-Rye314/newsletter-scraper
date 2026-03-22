@@ -30,3 +30,9 @@ output/
 .vscode/
 *.swp
 *.swo
+
+# Local artifacts / scratch
+dev_artifacts/
+*.log
+tmp_*
+*.txt
