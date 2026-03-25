@@ -11,14 +11,23 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from newsletter import render_newsletter, save_newsletter
+from newsletter import (
+    render_newsletter,
+    save_newsletter,
+    generate_newsletter_content,
+)
 
 # Use the real templates directory
 _TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
 
-def _article(title="Test Article", url="https://example.com/1", summary="A test summary.",
-              source="CBC Technology", published=None):
+def _article(
+    title="Test Article",
+    url="https://example.com/1",
+    summary="A test summary.",
+    source="CBC Technology",
+    published=None,
+):
     return {
         "title": title,
         "url": url,
@@ -29,6 +38,7 @@ def _article(title="Test Article", url="https://example.com/1", summary="A test 
 
 
 # ── render_newsletter ─────────────────────────────────────────────────────────
+
 
 def test_render_newsletter_contains_title():
     html = render_newsletter([], title="My Newsletter", templates_dir=_TEMPLATES_DIR)
@@ -41,35 +51,36 @@ def test_render_newsletter_contains_edition_date():
     assert "October 7, 2024" in html
 
 
-def test_render_newsletter_renders_article_title_and_link():
-    articles = [_article(title="Ontario Grant Program", url="https://example.com/grant")]
+def test_render_newsletter_renders_feature_story():
+    articles = [
+        _article(title="Ontario Grant Program", url="https://example.com/grant")
+    ]
     html = render_newsletter(articles, templates_dir=_TEMPLATES_DIR)
     assert "Ontario Grant Program" in html
     assert "https://example.com/grant" in html
+    assert "The Empowered Senior" in html
 
 
-def test_render_newsletter_renders_article_summary():
-    articles = [_article(summary="Seniors benefit from new digital tools in Ontario.")]
-    html = render_newsletter(articles, templates_dir=_TEMPLATES_DIR)
-    assert "Seniors benefit from new digital tools in Ontario." in html
+# ── generate_newsletter_content ───────────────────────────────────────────────
 
 
-def test_render_newsletter_shows_no_articles_message_when_empty():
-    html = render_newsletter([], templates_dir=_TEMPLATES_DIR)
-    assert "No relevant articles found" in html
-
-
-def test_render_newsletter_groups_by_source():
+def test_generate_newsletter_content_with_article():
     articles = [
-        _article(title="Story A", source="CBC Technology"),
-        _article(title="Story B", url="https://example.com/2", source="TechCrunch"),
+        _article(title="Tech for Seniors", url="https://example.com/tech-seniors")
     ]
-    html = render_newsletter(articles, templates_dir=_TEMPLATES_DIR)
-    assert "CBC Technology" in html
-    assert "TechCrunch" in html
+    content = generate_newsletter_content(articles)
+    assert "Tech for Seniors" in content
+    assert "https://example.com/tech-seniors" in content
+
+
+def test_generate_newsletter_content_no_articles():
+    content = generate_newsletter_content([])
+    assert "No featured article available" in content
+    assert "The Empowered Senior" in content
 
 
 # ── save_newsletter ───────────────────────────────────────────────────────────
+
 
 def test_save_newsletter_creates_file(tmp_path):
     html = "<html><body>Test</body></html>"

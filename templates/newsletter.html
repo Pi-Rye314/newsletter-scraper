@@ -153,24 +153,7 @@
       <p class="date">{{ edition_date }}</p>
     </header>
     <main>
-      {% if articles %}
-        {% set current_source = namespace(name=None) %}
-        {% for article in articles %}
-          {% if article.source != current_source.name %}
-            {% if current_source.name is not none %}</div>{% endif %}
-            {% set current_source.name = article.source %}
-            <div class="source-group">
-              <h2>{{ article.source }}</h2>
-          {% endif %}
-          <div class="article">
-            <h3><a href="{{ article.url }}">{{ article.title }}</a></h3>
-            {% if article.summary %}<p>{{ article.summary }}</p>{% endif %}
-          </div>
-        {% endfor %}
-        </div>
-      {% else %}
-        <p class="empty">No relevant articles found for this edition.</p>
-      {% endif %}
+      {{ content | safe }}
     </main>
     <footer>
       {{ title }} &mdash; {{ edition_date }}
