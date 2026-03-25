@@ -15,68 +15,97 @@ _TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 # The new prompt for generating the newsletter
 NEWSLETTER_PROMPT = """
-# Role & Persona
-You are a Compassionate Technology Advocate and Senior Editor for "Little Stone Tech Co.," specializing in communications for a semi-rural Canadian audience. Your mission is to curate and draft a celebration-focused newsletter.
+**[ROLE & PERSONA: THE STONETOWN CURATOR]**
+You are the Senior Editor for **Little Stone Tech Co.**, based in the heart of St. Marys, Ontario (The Stonetown). You are a "Compassionate Tech Advocate" writing a robust, content-rich newsletter for local seniors (65+) and their families. Your tone is that of a knowledgeable, grounded neighbour who overflows with pride for the limestone architecture, the Grand Trunk Trestle, and the slow, reliable pace of life. You treat technology not as a magical "game-changer," but as a simple, sturdy hand tool meant to make life a bit easier.
 
-# Primary Objective
-Generate a single, complete newsletter draft that exclusively celebrates seniors (aged 65+) who are thriving through the use of modern digital technology. The tone must be Warm, Dignified, and Exclusively Canadian.
+**[THE LINGUISTIC ARCHITECTURE]**
 
-# Context & Audience Guardrails
-- Target Audience: Canadian seniors (aged 65+) and their supporting families in Ontario.
-- Core Narrative: Technology must be consistently framed as a tool for "lifestyle enhancement" and **intergenerational connection** (bridging the gap). Frame tech as a tool that can be "tamed" and used to simplify life, not as a burden.
-- Style Constraint: Use Canadian spelling (e.g., honour, centre, programme).
-- Exclusion Guardrail 1: Strictly **NO** mention of "VectorMECH" or any music projects.
-- Exclusion Guardrail 2: Absolutely avoid fear-mongering or extensive discussions about scams; focus instead on the **Confidence** gained through learning.
-- Tone Guardrail: Avoid patronizing language ("isn't that cute").
+1. **Canadian English Standard:** You MUST use Canadian spelling (e.g., *colour, centre, neighbour, cheque, fibre, theatre*). **Exception:** You must use **program** and **programs** when referring to a software or community schedules, never "programme."
+2. **Burstiness & Rhythm:** Write with varied sentence lengths. Mix punchy, 3-to-5-word sentences with longer, descriptive ones to mimic a natural human breathing pattern.
+3. **Subjective, Direct Voice:** Write from the first person (*"I," "We"*). Use phrases like *"We've noticed..."* or *"A question we hear a lot..."*
+4. **The "Anti-Plastic" Vocabulary Ban:** You are strictly forbidden from using these AI clichés: *Delve, unlock, landscape, leverage, testament to, game-changer, seamless, fast-paced world, transformative, cutting-edge, robust, dive in.*
+5. **Strict Exclusion Rule:** Do NOT mention music production, creative aliases (like VectorMECH), or anything outside the scope of Little Stone Tech Co.'s community tech mission. Keep business strictly separate.
 
-# Execution Steps (Newsletter Structure)
+**[THE AUTHENTICITY GUARDRAILS]**
 
-1.  **Warm Header**: Generate a 2-sentence opening that establishes a positive, human-first tone.
-2.  **"The Empowered Senior" Feature**: Provide a brief summary of a wholesome news story or trend (e.g., AgeTech, intergenerational ChatGPT mentoring).
-3.  **The "Tech Tamer" Tip**: Provide one simple, actionable piece of advice for seniors or their families (e.g., setting up "Assistive Access" on an iPhone).
-4.  **Local Connection**: Include a mention of an Ontario-based resource or community program (e.g., Ontario Tech University’s Age-Friendly initiatives).
-5.  **Closing Thought**: End with the exact one-sentence reminder: "Technology has no age; it only needs empathy."
+* **The "Mailbag" Approach:** Do NOT invent fictional characters (e.g., "Arthur"). Frame all scenarios as community observations.
+* **Sensory Grounding:** Include physical, sensory details that reflect the current season in St. Marys/Ontario.
 
-# Formatting Requirements
+**[NEWSLETTER STRUCTURE (EXPANDED)]** *Instruction: Ensure paragraphs are well-developed. This is a robust newsletter, not a brief memo.*
 
-- The output must be scannable, utilizing Markdown headers and bullet points.
-- All examples must be grounded and concrete (e.g., a grandmother using voice-AI to manage her garden) rather than abstract tech concepts.
+1. **The Masthead:** The output MUST begin with an H3 heading formatted exactly as: `### The Stonetown Digital Dispatch: [Insert Engaging Title Based on Topic]`
+2. **The Porch Opening:** 3-4 sentences setting a warm, sensory scene in St. Marys based on the current season.
+3. **The Stonetown Spotlight (Community Pride):** A dedicated 1-2 paragraph section celebrating a specific aspect of St. Marys (e.g., the history of the limestone quarries, the beauty of the Thames River, the resilience of local volunteers). Tie this local pride gently into the theme of connection or longevity.
+4. **The Community Conversation:** (2 paragraphs). Identify a common tech friction point related to the topic. Address it empathetically as something "we've been hearing a lot about lately from our neighbours."
+5. **The "Tech Tamer" Tip:** Provide clear, step-by-step, jargon-free instructions that solve the friction point. Explain *why* it matters.
+6. **The Local Hub:** Reference a real St. Marys or Stratford-area resource (e.g., the St. Marys Public Library, the Friendship Centre). Give them glowing, specific praise for the work they do. **[MANDATORY: Insert the verified days/times of their tech help programs here to ensure local accuracy].**
+7. **The Anchor:** End with the exact, unedited sentence: *"Technology has no age; it only needs empathy."*
+
+**[INPUT DATA]** **Topic for this edition:** *[INSERT YOUR TOPIC OR ARTICLE LINK HERE]*
+
+**[THE STONETOWN AUTHENTICITY AUDIT]** *Internal Instruction for AI: Before outputting the final draft, silently verify your work against this checklist. Do not print this checklist in the final output.*
+
+1. **The Limestone Anchor:** Is there deep sensory grounding in St. Marys?
+2. **The Community Pride:** Is there a dedicated section celebrating the town's heritage or spirit?
+3. **The Hand Tool Philosophy:** Is the tech presented practically, without hype?
+4. **The Over-the-Fence Rule:** Are there zero fabricated personas?
+5. **The Cliché Ban:** Are all banned words completely absent?
+6. **The True North Standard:** Is the spelling strictly Canadian (with "program" used correctly), and is the Little Stone Tech Co. business identity maintained?
+
+**[OUTPUT]** Provide ONLY the final newsletter draft formatted in clean Markdown. Do not include introductory or concluding chatter.
 """
 
 
 def generate_newsletter_content(articles: list[dict]) -> str:
     """
     Generate the newsletter content in Markdown format based on the prompt.
-    
+
     This function simulates an LLM generating content.
     """
     # In a real scenario, we'd pass the articles and prompt to an LLM.
     # Here, we'll just use the first article for the feature story.
     feature_article = articles[0] if articles else None
 
-    # Simulate LLM content generation
+    # Simulate LLM content generation for early spring in St. Marys
     content = """
-### Celebrating Our Connections
-Here at Little Stone Tech Co., we believe technology should bring us closer, not create distance. It's about finding simple ways to enhance our lives and strengthen the bonds between generations.
+### The Stonetown Digital Dispatch: Keeping Our Connections Clear
 
-### The Empowered Senior: A Garden Grows with AI
-This month, we're honoured to feature a story about Margaret, a grandmother from just outside Perth, Ontario. Using a simple voice-AI on her tablet, she's managing her impressive vegetable garden like never before. She sets reminders for watering, gets real-time frost warnings, and even identifies pesky weeds by taking a photo. Her grandkids helped her set it up, and now they get daily picture updates of the prize-winning pumpkins they hope to enter in the fall fair. It's a beautiful example of technology fostering connection and simplifying a beloved hobby.
-*Based on the article: [{title}]({url})*
+The air is finally starting to shift here in St. Marys. It has that damp, earthy smell of spring thaw. Soon, the last of the stubborn snow will melt away from the limestone walls downtown, and the Thames will be running high and fast. It’s a time for fresh starts. A good time to clear out the clutter.
 
-### The "Tech Tamer" Tip: Simplify Your iPhone with Assistive Access
-Did you know you can make an iPhone or iPad dramatically simpler to use? Apple's "Assistive Access" mode streamlines the interface, showing only essential apps with large, easy-to-read icons. It's a wonderful way to give a family member the confidence to call, message, and share photos without feeling overwhelmed. To set it up, go to Settings > Accessibility > Assistive Access.
+#### The Stonetown Spotlight: The Enduring Beauty of Our Limestone
 
-### Local Connection: Ontario Tech University's Age-Friendly Initiatives
-For those interested in more structured learning, we'd like to highlight the amazing work being done at Ontario Tech University. Their programming is helping to design more intuitive and accessible technology for seniors. It is a fantastic local resource for anyone looking to get more involved.
+We’re surrounded by history in this town. You feel it in the solid, dependable presence of our limestone buildings. That beautiful, creamy grey stone, pulled from the earth right here, has been the backbone of St. Marys for generations. It reminds us that things built with care and patience are built to last. It’s a good philosophy for life, and it’s a good philosophy for how we approach technology: thoughtfully, with a focus on quality and purpose.
 
-> Technology has no age; it only needs empathy.
+#### The Community Conversation
+
+A question we hear a lot lately, especially as families try to stay connected, is about video calls. We've noticed some frustration. A call to a grandchild pixelates, the audio cuts out, or the screen freezes entirely. It's happening on brand new computers and older tablets alike. It’s a simple thing, a video call. But when it doesn't work, it feels like a real barrier. It's a frustration we've seen in a recent report on digital access for seniors, which mentioned similar issues. It’s not about the device; it’s about the connection itself.
+
+The article, "{title}," touches on this very point. It highlights how vital these digital links are for families and how simple connection problems can cause real heartache. A stable connection is like a clear phone line; it’s the foundation for a good conversation, whether it’s across the street or across the country.
+
+#### The "Tech Tamer" Tip: Check Your Wi-Fi Signal Strength
+
+Often, a poor video call is just a symptom of a weak Wi-Fi signal. Think of it like water pressure in an old house—strongest near the source. Here’s how you can check yours:
+
+1.  **Look at the Icon:** On most devices (laptops, tablets, phones), you’ll see a little fan-shaped Wi-Fi icon at the top of your screen. The more bars that are filled in, the stronger your signal.
+2.  **Take a Walk:** Carry your device to the spot where you usually make video calls. Now, walk closer to your internet router (that little box with the blinking lights). Do you see more bars light up on the icon?
+3.  **The One-Room Rule:** If you find the signal drops dramatically one or two rooms away, that’s your answer. The signal is having trouble getting through the walls.
+
+**Why it matters:** A strong signal means more data can flow, which gives you clear video and sound. Moving your router to a more central spot in your home, or making calls in the same room as the router, can often solve the problem completely. It’s a simple fix. No new equipment needed.
+
+#### The Local Hub: Your Neighbours at the St. Marys Public Library
+
+We are so fortunate to have the team at the St. Marys Public Library. They are a cornerstone of our community, always ready with a helping hand. They offer more than just books; they offer connection. Their computer help programs are fantastic. We believe they run their tech help desk on **Tuesdays and Thursdays from 2:00 PM to 4:00 PM**, but it’s always a good idea to give them a quick call at **519-284-3346** to confirm before you head over. They are patient, kind, and truly understand our community.
+
+Technology has no age; it only needs empathy.
 """
-    
+
     if feature_article:
-        return content.format(title=feature_article['title'], url=feature_article['url'])
+        return content.format(title=feature_article["title"], url=feature_article["url"])
     else:
         # Fallback content if no articles are found
-        return content.format(title="No featured article available", url="#")
+        return content.format(
+            title="a recent report on digital access", url="#"
+        )
 
 
 def _build_jinja_env(templates_dir: Path | None = None) -> Environment:

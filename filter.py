@@ -6,7 +6,13 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Iterable
 
-from config import ALL_KEYWORDS, MAX_ARTICLES, ONTARIO_KEYWORDS, SENIOR_KEYWORDS
+from config import (
+    ALL_KEYWORDS,
+    MAX_ARTICLES,
+    ONTARIO_KEYWORDS,
+    SENIOR_KEYWORDS,
+    NEGATIVE_KEYWORDS,
+)
 
 # Articles older than this many days are dropped regardless of relevance.
 _MAX_AGE_DAYS = 14
@@ -21,6 +27,7 @@ def _make_patterns(keywords: list[str]) -> list[re.Pattern]:
 _PATTERNS = _make_patterns(ALL_KEYWORDS)
 _SENIOR_PATTERNS = _make_patterns(SENIOR_KEYWORDS)
 _ONTARIO_PATTERNS = _make_patterns(ONTARIO_KEYWORDS)
+_NEGATIVE_PATTERNS = _make_patterns(NEGATIVE_KEYWORDS)
 
 
 def _text_matches(text: str, patterns: list[re.Pattern]) -> bool:
@@ -73,17 +80,26 @@ def filter_articles(
       2. Matches at least one SENIOR_KEYWORDS term (mandatory senior relevance).
       3. Matches at least one ONTARIO_KEYWORDS term (Canadian/Ontario context),
          OR comes from a dedicated senior-focused feed (source tag is trusted).
-
+      4. Does NOT match any NEGATIVE_KEYWORDS.
+    
     Articles are assumed to arrive newest-first (as produced by scraper.py).
     """
     # Feeds whose content is inherently senior-focused; freshness and Ontario
     # gates are waived since these sources are explicitly curated for our audience.
     _SENIOR_FEEDS = {
-        "CARP", "Healthy Debate", "Retire Happy", "LeadingAge", "AgingInPlace.com",
+        "CARP",
+        "Healthy Debate",
+        "Retire Happy",
+        "LeadingAge",
+        "AgingInPlace.com",
     }
 
     relevant = []
     for a in articles:
+        # Exclusion filter: drop articles with negative keywords
+        if is_relevant(a, _NEGATIVE_PATTERNS):
+            continue
+
         from_senior_feed = a.get("source") in _SENIOR_FEEDS
         senior_relevant = is_relevant(a, _SENIOR_PATTERNS)
         if not senior_relevant:

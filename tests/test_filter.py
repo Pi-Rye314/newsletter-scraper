@@ -44,11 +44,6 @@ def test_is_relevant_matches_senior_keyword_in_title():
     assert is_relevant(article) is True
 
 
-def test_is_relevant_matches_smb_keyword_in_summary():
-    article = _article(summary="This cloud platform helps small business owners automate payroll.")
-    assert is_relevant(article) is True
-
-
 def test_is_relevant_matches_ontario_keyword():
     article = _article(title="Toronto tech summit announces new grants for startups")
     assert is_relevant(article) is True
@@ -79,7 +74,6 @@ def test_is_relevant_uses_custom_patterns():
 
 def test_filter_articles_keeps_relevant_articles():
     articles = [
-        _article(title="Ontario entrepreneur wins award"),
         _article(title="New gaming console released"),
         # senior + Ontario keyword → kept
         _article(title="Telemedicine for seniors in Canada"),
@@ -92,14 +86,44 @@ def test_filter_articles_keeps_relevant_articles():
     titles = [a["title"] for a in result]
     assert "Telemedicine for seniors in Canada" in titles
     assert "Retirement planning tips" in titles
-    assert "Ontario entrepreneur wins award" not in titles
     assert "New gaming console released" not in titles
     assert "Telemedicine for seniors worldwide" not in titles
 
 
+def test_filter_articles_drops_negative_keywords():
+    articles = [
+        # Negative keyword in title → dropped
+        _article(
+            title="Seniors in Ontario Warned of New Phone Scam",
+            source="CARP",
+            url="https://example.com/1",
+        ),
+        # Negative keyword in summary → dropped
+        _article(
+            title="Tech Support Tips for Elders",
+            summary="Understanding the risk of phishing attempts.",
+            source="CARP",
+            url="https://example.com/2",
+        ),
+        # No negative keywords → kept
+        _article(
+            title="Ontario Seniors Embrace New Smart Home Tech",
+            source="CARP",
+            url="https://example.com/3",
+        ),
+    ]
+    result = filter_articles(articles)
+    urls = [a["url"] for a in result]
+    assert "https://example.com/1" not in urls
+    assert "https://example.com/2" not in urls
+    assert "https://example.com/3" in urls
+
+
 def test_filter_articles_respects_max_articles():
     articles = [
-        _article(title=f"Ontario seniors SMB news {i}", source="CARP", url=f"https://example.com/{i}")
+        _article(
+            title=f"Ontario seniors news {i}", source="CARP", url=f"https://example.com/{i}"
+        )
         for i in range(50)
     ]
     result = filter_articles(articles, max_articles=5)
@@ -136,17 +160,6 @@ def test_filter_articles_drops_stale_articles():
     assert "https://example.com/1" not in urls
     assert "https://example.com/2" in urls
     assert "https://example.com/3" in urls
-
-
-def test_filter_articles_word_boundary_prevents_false_match():
-    # "scheme" contains "sme" as substring - should NOT match \bsme\b
-    article = _article(title="New colour scheme for Ontario government", summary="Design scheme update.")
-    assert is_relevant(article) is True  # "Ontario" still matches via ONTARIO_KEYWORDS
-    # But a pure SME substring in an unrelated word shouldn't be the trigger
-    from filter import _make_patterns
-    sme_only = _make_patterns(["sme"])
-    article_scheme = _article(title="New colour scheme", summary="Design scheme update.")
-    assert is_relevant(article_scheme, patterns=sme_only) is False
 
 
 def test_filter_articles_returns_empty_when_nothing_relevant():

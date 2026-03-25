@@ -102,12 +102,32 @@ ONTARIO_KEYWORDS = [
     "canadian",
 ]
 
+# Keywords that signal a negative or fear-based article to be excluded.
+NEGATIVE_KEYWORDS = [
+    "scam",
+    "fraud",
+    "vulnerability",
+    "risk",
+    "danger",
+    "warning",
+    "threat",
+    "exploit",
+    "hack",
+    "breach",
+    "phishing",
+    "malware",
+    "decline",
+    "loss",
+    "crisis",
+    "problem",
+]
+
 # Combined filter list used by the filter module
-ALL_KEYWORDS = SENIOR_KEYWORDS + SMB_KEYWORDS + ONTARIO_KEYWORDS
+ALL_KEYWORDS = SENIOR_KEYWORDS + ONTARIO_KEYWORDS
 
 # Maximum number of articles to include in a single newsletter
 MAX_ARTICLES = 30
 
 # Newsletter metadata
-NEWSLETTER_TITLE = "Ontario Tech Digest"
-NEWSLETTER_SUBTITLE = "Weekly tech news for seniors and small businesses in Ontario, Canada"
+NEWSLETTER_TITLE = "Little Stone Tech Co."
+NEWSLETTER_SUBTITLE = "A celebration of seniors thriving with technology"
