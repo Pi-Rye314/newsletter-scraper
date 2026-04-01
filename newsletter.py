@@ -18,7 +18,9 @@ from config import NEWSLETTER_SUBTITLE, NEWSLETTER_TITLE
 
 # Locate the templates directory relative to this file
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
-_FEATURE_CANDIDATE_LIMIT = 3
+_FEATURE_CANDIDATE_POOL = 8
+_FEATURE_ROTATION_WIDTH = 3
+_FEATURE_MIN_SCORE = 12
 
 _TOPIC_MARKERS = {
     "payroll": {"payroll", "invoice", "bookkeep", "accounting", "tax", "cash flow", "remittance"},
@@ -62,6 +64,15 @@ _NOISY_TITLE_MARKERS = {
     "quarter",
     "conference call",
 }
+
+_PRACTICAL_GROUPS = (
+    "payroll",
+    "video",
+    "cyber",
+    "digital_confidence",
+    "digital_inclusion",
+    "digital_advocacy",
+)
 
 # The new prompt for generating the newsletter
 NEWSLETTER_PROMPT = """
@@ -112,15 +123,6 @@ def _article_option_score(article: dict) -> int:
     summary = str(article.get("summary", ""))
     combined = f"{title} {summary}".lower()
 
-    practical_groups = (
-        "payroll",
-        "video",
-        "cyber",
-        "digital_confidence",
-        "digital_inclusion",
-        "digital_advocacy",
-    )
-
     group_hits = 0
     marker_hits = 0
     practical_group_hits = 0
@@ -132,7 +134,7 @@ def _article_option_score(article: dict) -> int:
                 group_matched = True
         if group_matched:
             group_hits += 1
-            if group_name in practical_groups:
+            if group_name in _PRACTICAL_GROUPS:
                 practical_group_hits += 1
 
     # Favor headlines with clearer human-readable framing.
@@ -143,32 +145,79 @@ def _article_option_score(article: dict) -> int:
     return (practical_group_hits * 20) + (group_hits * 6) + (marker_hits * 2) + readability_bonus - noisy_penalty
 
 
-def _select_feature_article(articles: list[dict], top_n: int = _FEATURE_CANDIDATE_LIMIT) -> dict:
-    """Choose the best feature article from top candidates for variety and relevance."""
+def _article_practical_group_hits(article: dict) -> int:
+    """Return how many practical topic groups are present in an article."""
+    title = str(article.get("title", ""))
+    summary = str(article.get("summary", ""))
+    combined = f"{title} {summary}".lower()
+
+    practical_hits = 0
+    for group_name, markers in _TOPIC_MARKERS.items():
+        if group_name not in _PRACTICAL_GROUPS:
+            continue
+        if any(marker in combined for marker in markers):
+            practical_hits += 1
+    return practical_hits
+
+
+def _select_feature_article(
+    articles: list[dict],
+    edition_date: date | None = None,
+    pool_n: int = _FEATURE_CANDIDATE_POOL,
+    rotation_width: int = _FEATURE_ROTATION_WIDTH,
+) -> dict:
+    """Choose a feature article by rotating among top scored candidates each day."""
     if not articles:
         return {}
 
-    candidates = articles[:top_n]
-    best_index = 0
-    best_score = _article_option_score(candidates[0])
+    candidates = articles[:pool_n]
+    scored = [(idx, candidate, _article_option_score(candidate)) for idx, candidate in enumerate(candidates)]
+    scored.sort(key=lambda item: (-item[2], item[0]))
 
-    for idx, candidate in enumerate(candidates[1:], start=1):
-        score = _article_option_score(candidate)
-        if score > best_score:
-            best_score = score
-            best_index = idx
+    viable = [
+        item for item in scored
+        if item[2] >= _FEATURE_MIN_SCORE and _article_practical_group_hits(item[1]) > 0
+    ]
 
-    # If all top candidates score poorly, keep recency and use the first article.
-    if best_score < 12:
-        best_index = 0
-        best_score = _article_option_score(candidates[0])
+    if not viable:
+        # If the recency pool is weak, expand the search to all filtered articles.
+        full_scored = [
+            (idx, article, _article_option_score(article))
+            for idx, article in enumerate(articles)
+            if _article_practical_group_hits(article) > 0
+        ]
+        full_scored.sort(key=lambda item: (-item[2], item[0]))
+        if full_scored:
+            source_index, selected, selected_score = full_scored[0]
+            logger.info(
+                "FEATURE_PICK: expanded-scan idx=%d score=%d title='%s'",
+                source_index + 1,
+                selected_score,
+                selected.get("title", "Untitled article"),
+            )
+            return selected
 
-    selected = candidates[best_index]
+    if not viable:
+        selected = candidates[0]
+        logger.info(
+            "FEATURE_PICK: fallback recency (no practical match found) score=%d title='%s'",
+            _article_option_score(selected),
+            selected.get("title", "Untitled article"),
+        )
+        return selected
+
+    rotation_bucket = viable[: max(1, min(rotation_width, len(viable)))]
+    seed_date = edition_date or date.today()
+    rotation_index = seed_date.toordinal() % len(rotation_bucket)
+    source_index, selected, selected_score = rotation_bucket[rotation_index]
+
     logger.info(
-        "FEATURE_PICK: selected #%d/%d with score=%d title='%s'",
-        best_index + 1,
+        "FEATURE_PICK: selected idx=%d pool=%d viable=%d rotation_slot=%d score=%d title='%s'",
+        source_index + 1,
         len(candidates),
-        best_score,
+        len(viable),
+        rotation_index + 1,
+        selected_score,
         selected.get("title", "Untitled article"),
     )
     return selected
@@ -324,7 +373,7 @@ def _apply_quality_gates(newsletter: str, feature_title: str) -> str:
     return newsletter
 
 
-def generate_newsletter_content(articles: list[dict]) -> str:
+def generate_newsletter_content(articles: list[dict], edition_date: date | None = None) -> str:
     """
     Generate the newsletter content in Markdown format based on the prompt.
 
@@ -332,7 +381,7 @@ def generate_newsletter_content(articles: list[dict]) -> str:
     """
     # In a real scenario, we'd pass the articles and prompt to an LLM.
     # We keep the prompt topic in sync with the selected feature article.
-    feature_article = _select_feature_article(articles)
+    feature_article = _select_feature_article(articles, edition_date=edition_date)
     topic_for_edition = _topic_for_edition(feature_article)
     _resolved_prompt = NEWSLETTER_PROMPT.format(topic_for_edition=topic_for_edition)
 
@@ -416,7 +465,7 @@ def render_newsletter(
         edition_date = date.today()
 
     # Generate the newsletter content using the new prompt-based function
-    markdown_content = generate_newsletter_content(articles)
+    markdown_content = generate_newsletter_content(articles, edition_date=edition_date)
     html_content = markdown.markdown(markdown_content)
 
     env = _build_jinja_env(templates_dir)

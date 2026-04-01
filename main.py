@@ -4,7 +4,7 @@ import argparse
 import logging
 import sys
 import time
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from filter import filter_articles
@@ -14,6 +14,14 @@ from scraper import fetch_all_feeds
 
 log_file = setup_logging()
 logger = logging.getLogger(__name__)
+
+
+def _parse_edition_date(value: str) -> date:
+    """Parse YYYY-MM-DD input into a date object for deterministic edition generation."""
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("--edition-date must be in YYYY-MM-DD format") from exc
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -40,6 +48,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Print the newsletter to stdout instead of saving to disk",
     )
+    parser.add_argument(
+        "--edition-date",
+        type=_parse_edition_date,
+        help="Edition date in YYYY-MM-DD format (defaults to today)",
+    )
+    parser.add_argument(
+        "--preview-days",
+        type=int,
+        default=1,
+        metavar="N",
+        help="Generate N consecutive editions starting at --edition-date (default: 1)",
+    )
     return parser.parse_args(argv)
 
 
@@ -47,6 +67,10 @@ def run(argv: list[str] | None = None) -> int:
     """Main entry point; returns an exit code."""
     args = parse_args(argv)
     start_time = time.time()
+
+    if args.preview_days < 1:
+        logger.error("--preview-days must be 1 or greater")
+        return 2
     
     try:
         logger.info("=" * 70)
@@ -71,23 +95,27 @@ def run(argv: list[str] | None = None) -> int:
         if not articles:
             logger.warning("No articles matched the filter. The newsletter will be empty.")
 
+        base_edition_date = args.edition_date or date.today()
         logger.info("[STEP 3/4] Generating newsletter content …")
-        render_start = time.time()
-        edition_date = date.today()
-        html = render_newsletter(articles, edition_date=edition_date)
-        render_time = time.time() - render_start
-        logger.debug("Generated HTML content (%.2fs)", render_time)
 
-        if args.dry_run:
-            logger.info("[DRY-RUN] Outputting to stdout instead of saving")
-            print(html)
-            return 0
+        for offset in range(args.preview_days):
+            current_date = base_edition_date + timedelta(days=offset)
+            render_start = time.time()
+            html = render_newsletter(articles, edition_date=current_date)
+            render_time = time.time() - render_start
+            logger.debug("Generated HTML content for %s (%.2fs)", current_date.isoformat(), render_time)
 
-        logger.info("[STEP 4/4] Saving newsletter to disk …")
-        save_start = time.time()
-        output_file = save_newsletter(html, output_dir=args.output, edition_date=edition_date)
-        save_time = time.time() - save_start
-        logger.info("Newsletter saved to %s (%.2fs)", output_file, save_time)
+            if args.dry_run:
+                logger.info("[DRY-RUN] Outputting edition for %s", current_date.isoformat())
+                print(f"\n===== NEWSLETTER PREVIEW: {current_date.isoformat()} =====\n")
+                print(html)
+                continue
+
+            logger.info("[STEP 4/4] Saving newsletter to disk (%s) …", current_date.isoformat())
+            save_start = time.time()
+            output_file = save_newsletter(html, output_dir=args.output, edition_date=current_date)
+            save_time = time.time() - save_start
+            logger.info("Newsletter saved to %s (%.2fs)", output_file, save_time)
         
         total_time = time.time() - start_time
         logger.info("=" * 70)

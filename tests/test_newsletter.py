@@ -152,6 +152,55 @@ def test_generate_newsletter_content_prioritizes_digital_confidence_theme():
     assert "https://example.com/confidence" in content
 
 
+def test_generate_newsletter_content_rotates_among_top_scored_by_day():
+    articles = [
+        _article(
+            title="Community digital confidence workshop",
+            url="https://example.com/confidence",
+            summary="Bridge the digital divide with local tech support",
+        ),
+        _article(
+            title="Simple payroll checklist for local shops",
+            url="https://example.com/payroll",
+            summary="Payroll and tax remittance steps",
+        ),
+        _article(
+            title="How to avoid phishing scams",
+            url="https://example.com/cyber",
+            summary="Cybersecurity basics for families and small business",
+        ),
+    ]
+
+    day_one = generate_newsletter_content(articles, edition_date=date(2026, 4, 1))
+    day_two = generate_newsletter_content(articles, edition_date=date(2026, 4, 2))
+
+    links = {
+        "https://example.com/confidence": ("https://example.com/confidence" in day_one, "https://example.com/confidence" in day_two),
+        "https://example.com/payroll": ("https://example.com/payroll" in day_one, "https://example.com/payroll" in day_two),
+        "https://example.com/cyber": ("https://example.com/cyber" in day_one, "https://example.com/cyber" in day_two),
+    }
+    # Different days should rotate to a different feature option.
+    assert day_one != day_two
+    assert any(pair[0] != pair[1] for pair in links.values())
+
+
+def test_generate_newsletter_content_expands_scan_for_practical_alignment():
+    articles = [
+        _article(title="Board appoints new CEO", url="https://example.com/a1", summary="Quarterly earnings update"),
+        _article(title="Dividend announcement", url="https://example.com/a2", summary="Investor relations"),
+        _article(title="Market recap", url="https://example.com/a3", summary="Regional market commentary"),
+        _article(title="Executive transition update", url="https://example.com/a4", summary="Corporate governance note"),
+        _article(
+            title="Digital confidence clinic helps neighbours bridge the digital divide",
+            url="https://example.com/practical",
+            summary="Local digital advocacy and online safety support",
+        ),
+    ]
+
+    content = generate_newsletter_content(articles, edition_date=date(2026, 4, 1))
+    assert "https://example.com/practical" in content
+
+
 # ── save_newsletter ───────────────────────────────────────────────────────────
 
 
