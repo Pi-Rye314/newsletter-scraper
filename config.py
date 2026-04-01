@@ -20,10 +20,13 @@ relevant to seniors and small/medium businesses (SMBs) in Ontario, Canada.
 #   ScienceDaily Aging              – HTTP 404 (feed path removed)
 #   NCOA                            – HTTP 404 (no RSS endpoint)
 #   McKnight's Senior Living        – HTTP 302 redirect loop
+# Fourth-pass removals 2026-04-01:
+#   IT World Canada                 – domain hijacked (casino spam)
+#   IT Business Canada              – domain sold/parked
 RSS_FEEDS = [
     # Canadian IT & small business – the Stonetown Digital Dispatch core audience
-    {"name": "IT World Canada",    "url": "https://www.itworldcanada.com/feed"},
-    {"name": "IT Business Canada", "url": "https://www.itbusiness.ca/feed/"},
+    {"name": "CanadianSME",        "url": "https://canadiansme.ca/feed/"},
+    {"name": "Financial Post",     "url": "https://financialpost.com/feed/"},
     {"name": "BetaKit",            "url": "https://betakit.com/feed/"},
     {"name": "Small Business Trends", "url": "https://smallbiztrends.com/feed"},
 

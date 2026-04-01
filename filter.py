@@ -92,8 +92,8 @@ def filter_articles(
     # Feeds curated for our audience; freshness and Ontario gates are waived.
     _TRUSTED_FEEDS = {
         "CARP",
-        "IT World Canada",
-        "IT Business Canada",
+        "CanadianSME",
+        "Financial Post",
         "BetaKit",
         "Small Business Trends",
     }

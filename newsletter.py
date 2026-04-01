@@ -41,7 +41,7 @@ You are the Senior Editor for **Little Stone Tech Co.**, based in the heart of S
 6. **The Local Hub:** Reference a real St. Marys or Stratford-area resource (e.g., the St. Marys Public Library, the Friendship Centre). Give them glowing, specific praise for the work they do. **[MANDATORY: Insert the verified days/times of their tech help programs here to ensure local accuracy].**
 7. **The Anchor:** End with the exact, unedited sentence: *"Technology has no age; it only needs empathy."*
 
-**[INPUT DATA]** **Topic for this edition:** *[INSERT YOUR TOPIC OR ARTICLE LINK HERE]*
+**[INPUT DATA]** **Topic for this edition:** {topic_for_edition}
 
 **[THE STONETOWN AUTHENTICITY AUDIT]** *Internal Instruction for AI: Before outputting the final draft, silently verify your work against this checklist. Do not print this checklist in the final output.*
 
@@ -56,6 +56,17 @@ You are the Senior Editor for **Little Stone Tech Co.**, based in the heart of S
 """
 
 
+def _topic_for_edition(articles: list[dict]) -> str:
+    """Build a topic line from scraped article output."""
+    if not articles:
+        return "No scraped article available"
+
+    first = articles[0]
+    title = first.get("title", "Untitled article")
+    url = first.get("url", "#")
+    return f"[{title}]({url})"
+
+
 def generate_newsletter_content(articles: list[dict]) -> str:
     """
     Generate the newsletter content in Markdown format based on the prompt.
@@ -63,12 +74,21 @@ def generate_newsletter_content(articles: list[dict]) -> str:
     This function simulates an LLM generating content.
     """
     # In a real scenario, we'd pass the articles and prompt to an LLM.
-    # Here, we'll just use the first article for the feature story.
-    feature_article = articles[0] if articles else None
+    # We keep the prompt topic in sync with scraped content for that future path.
+    topic_for_edition = _topic_for_edition(articles)
+    _resolved_prompt = NEWSLETTER_PROMPT.format(topic_for_edition=topic_for_edition)
+
+    # Here, we still anchor the edition to the first article when present.
+    feature_article = articles[0] if articles else {}
+    feature_title = feature_article.get("title", "a recent report on digital access")
+    feature_url = feature_article.get("url", "#")
+    feature_reference = f"[{feature_title}]({feature_url})"
 
     # Simulate LLM content generation for early spring in St. Marys
     content = """
 ### The Stonetown Digital Dispatch: Keeping Our Connections Clear
+
+**Topic for this edition:** {topic_for_edition}
 
 The air is finally starting to shift here in St. Marys. It has that damp, earthy smell of spring thaw. Soon, the last of the stubborn snow will melt away from the limestone walls downtown, and the Thames will be running high and fast. It’s a time for fresh starts. A good time to clear out the clutter.
 
@@ -80,7 +100,7 @@ We’re surrounded by history in this town. You feel it in the solid, dependable
 
 A question we hear a lot lately, especially as families try to stay connected, is about video calls. We've noticed some frustration. A call to a grandchild pixelates, the audio cuts out, or the screen freezes entirely. It's happening on brand new computers and older tablets alike. It’s a simple thing, a video call. But when it doesn't work, it feels like a real barrier. It's a frustration we've seen in a recent report on digital access for seniors, which mentioned similar issues. It’s not about the device; it’s about the connection itself.
 
-The article, "[{title}]({url})," touches on this very point. It highlights how vital these digital links are for families and how simple connection problems can cause real heartache. A stable connection is like a clear phone line; it’s the foundation for a good conversation, whether it’s across the street or across the country.
+The article, "{feature_reference}," touches on this very point. It highlights how vital these digital links are for families and how simple connection problems can cause real heartache. A stable connection is like a clear phone line; it’s the foundation for a good conversation, whether it’s across the street or across the country.
 
 #### The "Tech Tamer" Tip: Check Your Wi-Fi Signal Strength
 
@@ -99,14 +119,16 @@ We are so fortunate to have the team at the St. Marys Public Library. They are a
 Technology has no age; it only needs empathy.
 """
 
-    if feature_article:
-        return content.format(title=feature_article["title"], url=feature_article["url"])
-    else:
-        # Fallback content if no articles are found
-        no_article_line = "\n\n*No featured article available this edition.*\n"
-        return content.format(
-            title="a recent report on digital access", url="#"
-        ) + no_article_line
+    newsletter = content.format(
+        topic_for_edition=topic_for_edition,
+        feature_reference=feature_reference,
+    )
+    if articles:
+        return newsletter
+
+    # Fallback content if no articles are found
+    no_article_line = "\n\n*No featured article available this edition.*\n"
+    return newsletter + no_article_line
 
 
 def _build_jinja_env(templates_dir: Path | None = None) -> Environment:
