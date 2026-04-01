@@ -2,7 +2,7 @@
 
 Provides content generation from articles, deterministic quality gate enforcement
 (regional reach, cyber actions, topic alignment), and HTML rendering via Jinja2 templates.
-""
+"""
 
 import logging
 from datetime import date
