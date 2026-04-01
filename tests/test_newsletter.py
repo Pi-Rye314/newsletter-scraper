@@ -93,6 +93,65 @@ def test_generate_newsletter_content_keeps_minimum_cyber_actions():
     assert hits >= 3
 
 
+def test_generate_newsletter_content_aligns_payroll_topic_sections():
+    content = generate_newsletter_content([
+        _article(title="Key Features of Kelly Payroll Services", url="https://example.com/payroll")
+    ])
+    lowered = content.lower()
+    assert "payroll" in lowered
+    assert "video call" not in lowered
+
+
+def test_generate_newsletter_content_selects_best_feature_from_top_candidates():
+    articles = [
+        _article(title="Market update", url="https://example.com/market", summary="General recap"),
+        _article(
+            title="Key Features of Kelly Payroll Services",
+            url="https://example.com/payroll",
+            summary="Payroll automation and tax remittance for small business owners",
+        ),
+        _article(title="Town notice", url="https://example.com/town", summary="Local bulletin"),
+    ]
+    content = generate_newsletter_content(articles)
+    assert "https://example.com/payroll" in content
+    assert "payroll confidence" in content.lower()
+
+
+def test_generate_newsletter_content_deprioritizes_announcement_headlines():
+    articles = [
+        _article(
+            title="Jane Doe appointed CEO in quarterly earnings update",
+            url="https://example.com/ceo",
+            summary="Corporate announcement and board update",
+        ),
+        _article(
+            title="Simple payroll checklist for local shops",
+            url="https://example.com/checklist",
+            summary="Payroll deductions and tax remittance steps for small business",
+        ),
+    ]
+    content = generate_newsletter_content(articles)
+    assert "https://example.com/checklist" in content
+    assert "payroll" in content.lower()
+
+
+def test_generate_newsletter_content_prioritizes_digital_confidence_theme():
+    articles = [
+        _article(
+            title="Regional board quarterly update",
+            url="https://example.com/board",
+            summary="Corporate earnings and dividend notes",
+        ),
+        _article(
+            title="Community digital confidence workshop helps bridge the digital divide",
+            url="https://example.com/confidence",
+            summary="Local digital advocacy and inclusion support for neighbours",
+        ),
+    ]
+    content = generate_newsletter_content(articles)
+    assert "https://example.com/confidence" in content
+
+
 # ── save_newsletter ───────────────────────────────────────────────────────────
 
 
