@@ -2,6 +2,7 @@
 filter.py – keeps only articles relevant to seniors and SMBs in Ontario, Canada.
 """
 
+import logging
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Iterable
@@ -14,6 +15,8 @@ from config import (
     SMB_KEYWORDS,
     NEGATIVE_KEYWORDS,
 )
+
+logger = logging.getLogger(__name__)
 
 # Articles older than this many days are dropped regardless of relevance.
 _MAX_AGE_DAYS = 14
@@ -98,19 +101,63 @@ def filter_articles(
         "Small Business Trends",
     }
 
+    articles_list = list(articles)
     relevant = []
-    for a in articles:
+    filter_stats = {
+        "negative_keywords": 0,
+        "not_audience": 0,
+        "stale": 0,
+        "no_ontario": 0,
+        "passed": 0,
+    }
+    
+    logger.debug(f"Starting filter on {len(articles_list)} articles (max output: {max_articles})")
+
+    for a in articles_list:
+        title = a.get("title", "")[:60]  # Truncate for logging
+        source = a.get("source", "Unknown")
+        
         # 1. Drop articles that match negative keywords
         if is_relevant(a, _NEGATIVE_PATTERNS):
+            filter_stats["negative_keywords"] += 1
+            logger.debug(f"[FILTERED] Negative keywords: {source} - {title}")
             continue
 
         # 2. Must match senior OR SMB audience keywords
         if not is_relevant(a, _AUDIENCE_PATTERNS):
+            filter_stats["not_audience"] += 1
+            logger.debug(f"[FILTERED] Not audience-relevant: {source} - {title}")
             continue
 
         from_trusted_feed = a.get("source") in _TRUSTED_FEEDS
+        
         # 3 & 4. Trusted feeds: always include. General feeds: fresh + Ontario.
-        if from_trusted_feed or (_is_fresh(a) and is_relevant(a, _ONTARIO_PATTERNS)):
-            relevant.append(a)
+        if not from_trusted_feed:
+            if not _is_fresh(a):
+                filter_stats["stale"] += 1
+                logger.debug(f"[FILTERED] Stale (>{_MAX_AGE_DAYS}d): {source} - {title}")
+                continue
+                
+            if not is_relevant(a, _ONTARIO_PATTERNS):
+                filter_stats["no_ontario"] += 1
+                logger.debug(f"[FILTERED] No Ontario context: {source} - {title}")
+                continue
+        
+        filter_stats["passed"] += 1
+        logger.debug(f"[PASSED] {source} - {title}")
+        relevant.append(a)
 
-    return relevant[:max_articles]
+    # Log summary
+    logger.info(
+        f"Filtering summary: passed={filter_stats['passed']}, "
+        f"negative={filter_stats['negative_keywords']}, "
+        f"not_audience={filter_stats['not_audience']}, "
+        f"stale={filter_stats['stale']}, "
+        f"no_ontario={filter_stats['no_ontario']}"
+    )
+    
+    result = relevant[:max_articles]
+    if len(relevant) > max_articles:
+        logger.info(f"Capped output to {max_articles} articles (removed {len(relevant) - max_articles} from bottom)")
+    
+    return result

@@ -2,11 +2,15 @@
 newsletter.py – renders a list of filtered articles into an HTML newsletter.
 """
 
+import logging
 from datetime import date
 from pathlib import Path
+import re
 
 import markdown
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+logger = logging.getLogger(__name__)
 
 from config import NEWSLETTER_SUBTITLE, NEWSLETTER_TITLE
 
@@ -38,8 +42,8 @@ You are the Senior Editor for **Little Stone Tech Co.**, based in the heart of S
 3. **The Stonetown Spotlight (Community Pride):** A dedicated 1-2 paragraph section celebrating a specific aspect of St. Marys (e.g., the history of the limestone quarries, the beauty of the Thames River, the resilience of local volunteers). Tie this local pride gently into the theme of connection or longevity.
 4. **The Community Conversation:** (2 paragraphs). Identify a common tech friction point related to the topic. Address it empathetically as something "we've been hearing a lot about lately from our neighbours."
 5. **The "Tech Tamer" Tip:** Provide clear, step-by-step, jargon-free instructions that solve the friction point. Explain *why* it matters.
-6. **The Local Hub:** Reference a real St. Marys or Stratford-area resource (e.g., the St. Marys Public Library, the Friendship Centre). Give them glowing, specific praise for the work they do. **[MANDATORY: Insert the verified days/times of their tech help programs here to ensure local accuracy].**
-7. **The Anchor:** End with the exact, unedited sentence: *"Technology has no age; it only needs empathy."*
+6. **The Local Hub:** Make this section community-wide. Speak to business owners, seniors, families, students, and newcomers together. Offer practical confidence-building actions people can take this week, and point readers to local groups where neighbours help neighbours with technology.
+7. **The Anchor:** End with the exact, unedited sentence: *"The true measure of our progress isn't found in the speed of our processors, but in the reach of our inclusion. As we bridge the digital divide right here at home, we prove that innovation is most powerful when it serves the heart of the community. Technology has no age; it only needs empathy."*
 
 **[INPUT DATA]** **Topic for this edition:** {topic_for_edition}
 
@@ -65,6 +69,65 @@ def _topic_for_edition(articles: list[dict]) -> str:
     title = first.get("title", "Untitled article")
     url = first.get("url", "#")
     return f"[{title}]({url})"
+
+
+def _apply_quality_gates(newsletter: str, feature_title: str) -> str:
+    """Enforce baseline quality checks and auto-correct when needed."""
+    lowered = newsletter.lower()
+    gates_triggered = []
+
+    # Gate 1: Regional reach (must include St. Marys and either Stratford or Perth County).
+    has_st_marys = "st. marys" in lowered or "st marys" in lowered
+    has_surrounding = "stratford" in lowered or "perth county" in lowered
+    if has_st_marys and not has_surrounding:
+        newsletter += (
+            "\n\nFor neighbours in Stratford and across Perth County, these same habits "
+            "apply just as well at home, at work, and in local community spaces."
+        )
+        gates_triggered.append("regional_reach (TRIGGERED)")
+        lowered = newsletter.lower()
+    else:
+        gates_triggered.append("regional_reach (passed)")
+
+    # Gate 2: Cyber-action minimum (at least three concrete actions).
+    action_markers = [
+        "two-factor",
+        "2fa",
+        "password",
+        "phishing",
+        "suspicious",
+        "update",
+        "backup",
+    ]
+    action_hits = sum(1 for marker in action_markers if marker in lowered)
+    if action_hits < 3:
+        newsletter += (
+            "\n\nBefore the week ends, do these three things: turn on two-factor "
+            "authentication, update your devices, and change one reused password."
+        )
+        gates_triggered.append(f"cyber_actions (TRIGGERED - had {action_hits}, need 3)")
+    else:
+        gates_triggered.append(f"cyber_actions (passed - {action_hits} markers found)")
+
+    # Gate 3: Topic/body alignment. Ensure at least one meaningful topic token appears.
+    topic_tokens = [
+        token
+        for token in re.findall(r"[a-zA-Z]{4,}", feature_title.lower())
+        if token not in {"with", "from", "that", "this", "your", "into", "about", "features"}
+    ]
+    if topic_tokens and not any(token in newsletter.lower() for token in topic_tokens[:4]):
+        newsletter += (
+            f"\n\nThis edition's feature, \"{feature_title}\", reinforces the same "
+            "goal: practical digital confidence for everyday life and local business."
+        )
+        gates_triggered.append("topic_alignment (TRIGGERED)")
+    else:
+        gates_triggered.append("topic_alignment (passed)")
+
+    # Log all gates
+    logger.info(f"QUALITY_GATES: {' | '.join(gates_triggered)}")
+    
+    return newsletter
 
 
 def generate_newsletter_content(articles: list[dict]) -> str:
@@ -112,9 +175,12 @@ Often, a poor video call is just a symptom of a weak Wi-Fi signal. Think of it l
 
 **Why it matters:** A strong signal means more data can flow, which gives you clear video and sound. Moving your router to a more central spot in your home, or making calls in the same room as the router, can often solve the problem completely. It’s a simple fix. No new equipment needed.
 
-#### The Local Hub: Your Neighbours at the St. Marys Public Library
+#### Cyber Confidence on Main Street: Your Local Hub
 
-We are so fortunate to have the team at the St. Marys Public Library. They are a cornerstone of our community, always ready with a helping hand. They offer more than just books; they offer connection. Their computer help programs are fantastic. We believe they run their tech help desk on **Tuesdays and Thursdays from 2:00 PM to 4:00 PM**, but it’s always a good idea to give them a quick call at **519-284-3346** to confirm before you head over. They are patient, kind, and truly understand our community.
+Cybersecurity works best when it feels like a shared community habit, not a private burden. On Main Street and on side streets, the same three steps protect nearly everyone: turn on two-factor authentication, update devices every week, and pause before clicking urgent links. These are small actions, but they create real confidence for shop owners, retirees, parents, students, and anyone working online.
+
+This week, invite one person in your circle to do a 15-minute "cyber check-in" with you. Review passwords, confirm account recovery emails, and practice spotting a suspicious message together. Community confidence grows one conversation at a time, and every neighbour who feels safer online makes our whole town stronger.
+
 
 Technology has no age; it only needs empathy.
 """
@@ -123,6 +189,8 @@ Technology has no age; it only needs empathy.
         topic_for_edition=topic_for_edition,
         feature_reference=feature_reference,
     )
+
+    newsletter = _apply_quality_gates(newsletter, feature_title)
     if articles:
         return newsletter
 
@@ -195,7 +263,12 @@ def save_newsletter(
 
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
+    logger.debug(f"Output directory ensured: {output_path.absolute()}")
 
     filename = output_path / f"newsletter_{edition_date.isoformat()}.html"
     filename.write_text(html, encoding="utf-8")
+    
+    file_size_kb = filename.stat().st_size / 1024
+    logger.debug(f"Newsletter file written: {filename.name} ({file_size_kb:.1f} KB)")
+    
     return filename

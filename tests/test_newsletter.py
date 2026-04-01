@@ -77,6 +77,22 @@ def test_generate_newsletter_content_no_articles():
     assert "No featured article available" in content
 
 
+def test_generate_newsletter_content_adds_surrounding_area_reference():
+    content = generate_newsletter_content([
+        _article(title="Payroll security for small business", url="https://example.com/payroll")
+    ])
+    assert "Perth County" in content or "Stratford" in content
+
+
+def test_generate_newsletter_content_keeps_minimum_cyber_actions():
+    content = generate_newsletter_content([
+        _article(title="Cyber basics", url="https://example.com/cyber")
+    ])
+    indicators = ["two-factor", "password", "suspicious", "update", "backup", "2fa", "phishing"]
+    hits = sum(1 for marker in indicators if marker in content.lower())
+    assert hits >= 3
+
+
 # ── save_newsletter ───────────────────────────────────────────────────────────
 
 
