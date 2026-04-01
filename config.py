@@ -156,5 +156,5 @@ ALL_KEYWORDS = SENIOR_KEYWORDS + SMB_KEYWORDS + ONTARIO_KEYWORDS
 MAX_ARTICLES = 30
 
 # Newsletter metadata
-NEWSLETTER_TITLE = "The Stonetown Digital Dispatch | St. Marys Tech & IT Insights | The Stonetown Digital Dispatch"
+NEWSLETTER_TITLE = "The Stonetown Digital Dispatch | St. Marys Tech & IT Insights"
 NEWSLETTER_SUBTITLE = "Get jargon-free tech tips, local IT support, and digital advocacy for St. Marys businesses from Ryan Wilson at Little Stone Tech Co. Subscribe for weekly insights."

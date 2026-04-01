@@ -1,9 +1,4 @@
-"""
-main.py – CLI entry point for the newsletter scraper.
-
-Usage:
-    python main.py [--output OUTPUT_DIR] [--no-filter] [--dry-run]
-"""
+"""Newsletter scraper CLI: fetch, filter, and render a daily tech newsletter."""
 
 import argparse
 import logging
@@ -13,64 +8,37 @@ from datetime import date
 from pathlib import Path
 
 from filter import filter_articles
+from logging_config import setup_logging
 from newsletter import render_newsletter, save_newsletter
 from scraper import fetch_all_feeds
 
-def _setup_logging():
-    """Configure logging with both console and file output."""
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
-    
-    log_file = log_dir / f"newsletter_{date.today().isoformat()}.log"
-    
-    # Format string for detailed logging
-    log_format = "%(asctime)s  %(name)-20s  %(levelname)-8s  %(message)s"
-    date_format = "%Y-%m-%d %H:%M:%S"
-    
-    # Root logger config
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-    
-    # Console handler (INFO and above)
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_formatter = logging.Formatter(log_format, datefmt=date_format)
-    console_handler.setFormatter(console_formatter)
-    
-    # File handler (DEBUG and above)
-    file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
-    file_handler.setLevel(logging.DEBUG)
-    file_formatter = logging.Formatter(log_format, datefmt=date_format)
-    file_handler.setFormatter(file_formatter)
-    
-    root_logger.addHandler(console_handler)
-    root_logger.addHandler(file_handler)
-    
-    return log_file
-
-log_file = _setup_logging()
+log_file = setup_logging()
 logger = logging.getLogger(__name__)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command-line arguments for the newsletter scraper."""
     parser = argparse.ArgumentParser(
         description="Scrape RSS feeds and generate a weekly newsletter for seniors "
-        "and SMBs in Ontario, Canada."
+        "and SMBs in Ontario, Canada.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Example: python main.py --output output_live\n",
     )
     parser.add_argument(
         "--output",
         default="output",
-        help="Directory where the generated HTML newsletter is saved (default: output/).",
+        metavar="DIR",
+        help="Directory where to save the generated HTML newsletter (default: output/)",
     )
     parser.add_argument(
         "--no-filter",
         action="store_true",
-        help="Include all fetched articles without keyword filtering.",
+        help="Include all fetched articles without applying relevance filters",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the newsletter to stdout instead of saving to disk.",
+        help="Print the newsletter to stdout instead of saving to disk",
     )
     return parser.parse_args(argv)
 

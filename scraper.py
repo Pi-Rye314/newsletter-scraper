@@ -1,5 +1,7 @@
-"""
-scraper.py – fetches and parses RSS feeds into a list of article dicts.
+"""Scraper module: fetch and parse RSS feeds into normalized article dictionaries.
+
+Provides functions to retrieve articles from multiple RSS feed sources,
+sanitize content, deduplicate by URL, and sort by publication date.
 """
 
 import logging

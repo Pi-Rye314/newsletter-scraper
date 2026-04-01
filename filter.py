@@ -1,5 +1,7 @@
-"""
-filter.py – keeps only articles relevant to seniors and SMBs in Ontario, Canada.
+"""Filter module: gate articles by keyword relevance, freshness, and regional focus.
+
+Provides filtering logic for a specialized audience (seniors and SMBs) in Ontario,
+with support for trusted feeds, stale article pruning, and audience-specific gatekeeping.
 """
 
 import logging

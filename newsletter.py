@@ -1,6 +1,8 @@
-"""
-newsletter.py – renders a list of filtered articles into an HTML newsletter.
-"""
+"""Newsletter module: generate, quality-gate, and render newsletters to HTML.
+
+Provides content generation from articles, deterministic quality gate enforcement
+(regional reach, cyber actions, topic alignment), and HTML rendering via Jinja2 templates.
+""
 
 import logging
 from datetime import date
