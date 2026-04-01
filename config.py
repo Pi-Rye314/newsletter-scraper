@@ -21,14 +21,14 @@ relevant to seniors and small/medium businesses (SMBs) in Ontario, Canada.
 #   NCOA                            – HTTP 404 (no RSS endpoint)
 #   McKnight's Senior Living        – HTTP 302 redirect loop
 RSS_FEEDS = [
-    # Canadian seniors & health – primary audience feeds
-    {"name": "CARP",              "url": "https://www.carp.ca/feed/"},
-    {"name": "Healthy Debate",    "url": "https://healthydebate.ca/feed/"},
-    {"name": "Retire Happy",       "url": "https://www.retirehappy.ca/feed/"},
+    # Canadian IT & small business – the Stonetown Digital Dispatch core audience
+    {"name": "IT World Canada",    "url": "https://www.itworldcanada.com/feed"},
+    {"name": "IT Business Canada", "url": "https://www.itbusiness.ca/feed/"},
+    {"name": "BetaKit",            "url": "https://betakit.com/feed/"},
+    {"name": "Small Business Trends", "url": "https://smallbiztrends.com/feed"},
 
-    # North American seniors – high-volume, keyword-rich content
-    {"name": "LeadingAge",         "url": "https://leadingage.org/feed/"},
-    {"name": "AgingInPlace.com",   "url": "https://www.aginginplace.com/feed/"},
+    # Canadian seniors – a core segment of St. Marys small business owners
+    {"name": "CARP",              "url": "https://www.carp.ca/feed/"},
 
     # Working tech / business feeds kept from original list
     {"name": "Globe and Mail Business", "url": "https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business/"},
@@ -88,6 +88,25 @@ SMB_KEYWORDS = [
     "grant",
     "funding",
     "loan",
+    # Digital advocacy & IT-support terms – the Stonetown Digital Dispatch focus
+    "digital literacy",
+    "digital advocacy",
+    "it support",
+    "tech tip",
+    "website",
+    "social media",
+    "email marketing",
+    "digital marketing",
+    "online presence",
+    "search engine",
+    "seo",
+    "data privacy",
+    "password",
+    "backup",
+    "broadband",
+    "digital transformation",
+    "local business",
+    "main street",
 ]
 
 ONTARIO_KEYWORDS = [
@@ -98,6 +117,11 @@ ONTARIO_KEYWORDS = [
     "london",
     "mississauga",
     "brampton",
+    "st. marys",
+    "st marys",
+    "perth county",
+    "stratford",
+    "southwestern ontario",
     "canada",
     "canadian",
 ]
@@ -123,11 +147,11 @@ NEGATIVE_KEYWORDS = [
 ]
 
 # Combined filter list used by the filter module
-ALL_KEYWORDS = SENIOR_KEYWORDS + ONTARIO_KEYWORDS
+ALL_KEYWORDS = SENIOR_KEYWORDS + SMB_KEYWORDS + ONTARIO_KEYWORDS
 
 # Maximum number of articles to include in a single newsletter
 MAX_ARTICLES = 30
 
 # Newsletter metadata
-NEWSLETTER_TITLE = "Little Stone Tech Co."
-NEWSLETTER_SUBTITLE = "A celebration of seniors thriving with technology"
+NEWSLETTER_TITLE = "The Stonetown Digital Dispatch | St. Marys Tech & IT Insights | The Stonetown Digital Dispatch"
+NEWSLETTER_SUBTITLE = "Get jargon-free tech tips, local IT support, and digital advocacy for St. Marys businesses from Ryan Wilson at Little Stone Tech Co. Subscribe for weekly insights."

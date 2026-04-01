@@ -58,7 +58,6 @@ def test_render_newsletter_renders_feature_story():
     html = render_newsletter(articles, templates_dir=_TEMPLATES_DIR)
     assert "Ontario Grant Program" in html
     assert "https://example.com/grant" in html
-    assert "The Empowered Senior" in html
 
 
 # ── generate_newsletter_content ───────────────────────────────────────────────
@@ -76,7 +75,6 @@ def test_generate_newsletter_content_with_article():
 def test_generate_newsletter_content_no_articles():
     content = generate_newsletter_content([])
     assert "No featured article available" in content
-    assert "The Empowered Senior" in content
 
 
 # ── save_newsletter ───────────────────────────────────────────────────────────

@@ -80,7 +80,7 @@ We’re surrounded by history in this town. You feel it in the solid, dependable
 
 A question we hear a lot lately, especially as families try to stay connected, is about video calls. We've noticed some frustration. A call to a grandchild pixelates, the audio cuts out, or the screen freezes entirely. It's happening on brand new computers and older tablets alike. It’s a simple thing, a video call. But when it doesn't work, it feels like a real barrier. It's a frustration we've seen in a recent report on digital access for seniors, which mentioned similar issues. It’s not about the device; it’s about the connection itself.
 
-The article, "{title}," touches on this very point. It highlights how vital these digital links are for families and how simple connection problems can cause real heartache. A stable connection is like a clear phone line; it’s the foundation for a good conversation, whether it’s across the street or across the country.
+The article, "[{title}]({url})," touches on this very point. It highlights how vital these digital links are for families and how simple connection problems can cause real heartache. A stable connection is like a clear phone line; it’s the foundation for a good conversation, whether it’s across the street or across the country.
 
 #### The "Tech Tamer" Tip: Check Your Wi-Fi Signal Strength
 
@@ -103,9 +103,10 @@ Technology has no age; it only needs empathy.
         return content.format(title=feature_article["title"], url=feature_article["url"])
     else:
         # Fallback content if no articles are found
+        no_article_line = "\n\n*No featured article available this edition.*\n"
         return content.format(
             title="a recent report on digital access", url="#"
-        )
+        ) + no_article_line
 
 
 def _build_jinja_env(templates_dir: Path | None = None) -> Environment:

@@ -11,6 +11,7 @@ from config import (
     MAX_ARTICLES,
     ONTARIO_KEYWORDS,
     SENIOR_KEYWORDS,
+    SMB_KEYWORDS,
     NEGATIVE_KEYWORDS,
 )
 
@@ -26,6 +27,8 @@ def _make_patterns(keywords: list[str]) -> list[re.Pattern]:
 # Pre-compile keyword patterns for speed
 _PATTERNS = _make_patterns(ALL_KEYWORDS)
 _SENIOR_PATTERNS = _make_patterns(SENIOR_KEYWORDS)
+_SMB_PATTERNS = _make_patterns(SMB_KEYWORDS)
+_AUDIENCE_PATTERNS = _make_patterns(SENIOR_KEYWORDS + SMB_KEYWORDS)
 _ONTARIO_PATTERNS = _make_patterns(ONTARIO_KEYWORDS)
 _NEGATIVE_PATTERNS = _make_patterns(NEGATIVE_KEYWORDS)
 
@@ -76,37 +79,38 @@ def filter_articles(
     result at *max_articles*.
 
     An article must satisfy ALL of:
-      1. Published within _MAX_AGE_DAYS (or undated).
-      2. Matches at least one SENIOR_KEYWORDS term (mandatory senior relevance).
+      1. Does NOT match any NEGATIVE_KEYWORDS.
+      2. Matches at least one SENIOR_KEYWORDS OR SMB_KEYWORDS term
+         (audience relevance – the Stonetown Digital Dispatch serves seniors
+         and small-business owners in St. Marys, Ontario).
       3. Matches at least one ONTARIO_KEYWORDS term (Canadian/Ontario context),
-         OR comes from a dedicated senior-focused feed (source tag is trusted).
-      4. Does NOT match any NEGATIVE_KEYWORDS.
-    
+         OR comes from a curated feed (source tag is trusted).
+      4. Published within _MAX_AGE_DAYS (or undated) – unless from a trusted feed.
+
     Articles are assumed to arrive newest-first (as produced by scraper.py).
     """
-    # Feeds whose content is inherently senior-focused; freshness and Ontario
-    # gates are waived since these sources are explicitly curated for our audience.
-    _SENIOR_FEEDS = {
+    # Feeds curated for our audience; freshness and Ontario gates are waived.
+    _TRUSTED_FEEDS = {
         "CARP",
-        "Healthy Debate",
-        "Retire Happy",
-        "LeadingAge",
-        "AgingInPlace.com",
+        "IT World Canada",
+        "IT Business Canada",
+        "BetaKit",
+        "Small Business Trends",
     }
 
     relevant = []
     for a in articles:
-        # Exclusion filter: drop articles with negative keywords
+        # 1. Drop articles that match negative keywords
         if is_relevant(a, _NEGATIVE_PATTERNS):
             continue
 
-        from_senior_feed = a.get("source") in _SENIOR_FEEDS
-        senior_relevant = is_relevant(a, _SENIOR_PATTERNS)
-        if not senior_relevant:
+        # 2. Must match senior OR SMB audience keywords
+        if not is_relevant(a, _AUDIENCE_PATTERNS):
             continue
-        # Senior-specific feeds: always include (freshness and geography waived).
-        # General feeds: article must also be recent and mention Ontario/Canada.
-        if from_senior_feed or (_is_fresh(a) and is_relevant(a, _ONTARIO_PATTERNS)):
+
+        from_trusted_feed = a.get("source") in _TRUSTED_FEEDS
+        # 3 & 4. Trusted feeds: always include. General feeds: fresh + Ontario.
+        if from_trusted_feed or (_is_fresh(a) and is_relevant(a, _ONTARIO_PATTERNS)):
             relevant.append(a)
 
     return relevant[:max_articles]

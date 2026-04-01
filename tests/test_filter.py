@@ -130,18 +130,25 @@ def test_filter_articles_respects_max_articles():
     assert len(result) == 5
 
 
-def test_filter_articles_requires_senior_relevance():
+def test_filter_articles_requires_audience_relevance():
     articles = [
+        # SMB + Ontario keyword → kept (audience gate accepts senior OR SMB)
         _article(title="Ontario SMB grant update", url="https://example.com/1"),
         # senior + Ontario keyword → kept
         _article(title="Accessibility tools for seniors in Ontario", url="https://example.com/2"),
+        # SMB but no Ontario keyword and not a trusted feed → dropped
         _article(title="Cloud accounting for small business", url="https://example.com/3"),
+        # neither senior nor SMB → dropped
+        _article(title="New gaming console released", url="https://example.com/4"),
     ]
 
     result = filter_articles(articles, max_articles=5)
-    titles = [a["title"] for a in result]
+    urls = [a["url"] for a in result]
 
-    assert titles == ["Accessibility tools for seniors in Ontario"]
+    assert "https://example.com/1" in urls
+    assert "https://example.com/2" in urls
+    assert "https://example.com/3" not in urls
+    assert "https://example.com/4" not in urls
 
 
 def test_filter_articles_drops_stale_articles():
