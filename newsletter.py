@@ -5,9 +5,9 @@ Provides content generation from articles, deterministic quality gate enforcemen
 """
 
 import logging
+import re
 from datetime import date
 from pathlib import Path
-import re
 
 import markdown
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -23,8 +23,6 @@ _FEATURE_ROTATION_WIDTH = 3
 _FEATURE_MIN_SCORE = 12
 
 _TOPIC_MARKERS = {
-    "payroll": {"payroll", "invoice", "bookkeep", "accounting", "tax", "cash flow", "remittance"},
-    "video": {"video", "zoom", "wifi", "wi-fi", "call"},
     "cyber": {"security", "cyber", "phishing", "password", "2fa", "two-factor", "fraud"},
     "business": {"small business", "smb", "retail", "shop", "owner", "sales"},
     "digital_confidence": {
@@ -66,13 +64,56 @@ _NOISY_TITLE_MARKERS = {
 }
 
 _PRACTICAL_GROUPS = (
-    "payroll",
     "video",
     "cyber",
     "digital_confidence",
     "digital_inclusion",
     "digital_advocacy",
 )
+
+_OPENING_VARIANTS = [
+    (
+        "The air is shifting in St. Marys, and you can feel spring in the stone and along the Thames. "
+        "This is the season where routines get reset and small habits start paying off. "
+        "If your digital life has felt cluttered, this is a good week to clear one bottleneck and make things easier."
+    ),
+    (
+        "Around town, there is that early-spring energy where everyone is getting organized again. "
+        "Shops are planning, families are reconnecting, and people are asking better tech questions. "
+        "This edition is built to keep things practical, calm, and useful for real life in St. Marys."
+    ),
+    (
+        "As the weather softens across St. Marys, this is a strong moment to build digital confidence one step at a time. "
+        "Not with big promises, but with simple actions that help at home and at work. "
+        "Our goal each week is to make tech feel less noisy and more dependable."
+    ),
+    (
+        "Spring always reminds us that steady progress beats frantic change. "
+        "In St. Marys, we hear from neighbours who want technology to feel clear, not complicated. "
+        "This issue focuses on practical steps you can use right away, with confidence."
+    ),
+]
+
+_CLOSING_VARIANTS = [
+    (
+        "Before next week, pick one person to check in with and share one simple digital habit. "
+        "That small act of support is how confidence spreads across families, businesses, and neighbourhoods."
+    ),
+    (
+        "If this edition helps, turn it into action today: choose one improvement, do it in 15 minutes, and invite someone else to do the same. "
+        "Community resilience grows when practical help gets passed along."
+    ),
+    (
+        "This week, keep it simple: one safer account, one clearer process, one conversation with a neighbour. "
+        "Those small steps are exactly how we bridge the digital divide in everyday life."
+    ),
+    (
+        "Real progress is not loud. It is consistent, shared, and useful. "
+        "Thank you for being part of a local culture that treats digital confidence as something we build together."
+    ),
+]
+
+_ANCHOR_LINE = "Technology has no age; it only needs empathy."
 
 # The new prompt for generating the newsletter
 NEWSLETTER_PROMPT = """
@@ -237,38 +278,7 @@ def _topic_sections(feature_title: str, feature_reference: str) -> tuple[str, st
     """Return topic-aligned Community Conversation and Tech Tamer sections."""
     lowered = feature_title.lower()
 
-    payroll_markers = {
-        "payroll",
-        "invoice",
-        "bookkeep",
-        "accounting",
-        "tax",
-        "cash flow",
-        "remittance",
-    }
     video_markers = {"video", "zoom", "wifi", "wi-fi", "call"}
-
-    if any(marker in lowered for marker in payroll_markers):
-        community = f"""
-#### The Community Conversation
-
-A question we hear a lot lately from business owners and family-run shops is about payroll confidence. People worry they will miss a deduction, submit numbers late, or lose track of who was paid and when. That stress usually builds up when records live in too many places at once.
-
-The article, \"{feature_reference},\" points to practical payroll features that can reduce that pressure. The goal is not to add complexity. It is to make payday predictable, reduce last-minute scrambling, and keep a clear record trail that helps during tax season.
-"""
-
-        tip = """
-#### The "Tech Tamer" Tip: Build a 10-Minute Payroll Check
-
-Before each pay run, do this short check:
-
-1.  **Confirm Hours and Rates:** Match submitted hours with current wage rates in one sheet.
-2.  **Review Deductions:** Verify CPP, EI, and tax fields before finalizing payroll.
-3.  **Save a Snapshot:** Export the payroll summary and store it in a dated folder for easy reference.
-
-**Why it matters:** A quick routine like this catches small mistakes early, helps you answer staff questions faster, and keeps your records ready for month-end and tax reporting.
-"""
-        return community, tip
 
     if any(marker in lowered for marker in video_markers):
         community = f"""
@@ -312,6 +322,25 @@ Set aside ten minutes each week for this reset:
 **Why it matters:** A simple weekly reset prevents avoidable problems and gives you more confidence using your tools every day.
 """
     return community, tip
+
+
+def _variant_seed(edition_date: date | None, feature_title: str) -> int:
+    """Build a deterministic seed from edition date and feature title."""
+    base = (edition_date or date.today()).toordinal()
+    title_score = sum(ord(ch) for ch in feature_title.lower())
+    return base + title_score
+
+
+def _opening_for_edition(feature_title: str, edition_date: date | None) -> str:
+    """Return a rotating but deterministic opening paragraph for the edition."""
+    seed = _variant_seed(edition_date, feature_title)
+    return _OPENING_VARIANTS[seed % len(_OPENING_VARIANTS)]
+
+
+def _closing_for_edition(feature_title: str, edition_date: date | None) -> str:
+    """Return a rotating but deterministic closing paragraph for the edition."""
+    seed = _variant_seed(edition_date, feature_title)
+    return _CLOSING_VARIANTS[seed % len(_CLOSING_VARIANTS)]
 
 
 def _apply_quality_gates(newsletter: str, feature_title: str) -> str:
@@ -389,6 +418,8 @@ def generate_newsletter_content(articles: list[dict], edition_date: date | None 
     feature_url = feature_article.get("url", "#")
     feature_reference = f"[{feature_title}]({feature_url})"
     community_section, tip_section = _topic_sections(feature_title, feature_reference)
+    opening_section = _opening_for_edition(feature_title, edition_date)
+    closing_section = _closing_for_edition(feature_title, edition_date)
 
     # Simulate LLM content generation for early spring in St. Marys
     content = """
@@ -396,7 +427,7 @@ def generate_newsletter_content(articles: list[dict], edition_date: date | None 
 
 **Topic for this edition:** {topic_for_edition}
 
-The air is finally starting to shift here in St. Marys. It has that damp, earthy smell of spring thaw. Soon, the last of the stubborn snow will melt away from the limestone walls downtown, and the Thames will be running high and fast. It’s a time for fresh starts. A good time to clear out the clutter.
+{opening_section}
 
 #### The Stonetown Spotlight: The Enduring Beauty of Our Limestone
 
@@ -413,13 +444,18 @@ Cybersecurity works best when it feels like a shared community habit, not a priv
 This week, invite one person in your circle to do a 15-minute "cyber check-in" with you. Review passwords, confirm account recovery emails, and practice spotting a suspicious message together. Community confidence grows one conversation at a time, and every neighbour who feels safer online makes our whole town stronger.
 
 
-Technology has no age; it only needs empathy.
+{closing_section}
+
+{anchor_line}
 """
 
     newsletter = content.format(
         topic_for_edition=topic_for_edition,
+        opening_section=opening_section,
         community_section=community_section,
         tip_section=tip_section,
+        closing_section=closing_section,
+        anchor_line=_ANCHOR_LINE,
     )
 
     newsletter = _apply_quality_gates(newsletter, feature_title)

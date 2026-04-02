@@ -2,26 +2,26 @@
 Tests for scraper.py
 """
 
-import sys
 import os
-from datetime import datetime, timezone
-from io import BytesIO
+import sys
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from scraper import _parse_date, fetch_feed, fetch_all_feeds
+from scraper import _parse_date, fetch_all_feeds, fetch_feed
 
 
 def _urlopen_mock(data: bytes = b"<rss/>"):
     """Return a context-manager mock for urllib.request.urlopen."""
     @contextmanager
     def _mgr(*args, **kwargs):
-        resp = MagicMock()
-        resp.read.return_value = data
+        class _FakeResponse:
+            def read(self):
+                return data
+
+        resp = _FakeResponse()
         yield resp
     return _mgr
 

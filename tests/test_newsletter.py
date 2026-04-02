@@ -2,19 +2,17 @@
 Tests for newsletter.py
 """
 
-import sys
 import os
+import sys
 from datetime import date
 from pathlib import Path
-
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from newsletter import (
+    generate_newsletter_content,
     render_newsletter,
     save_newsletter,
-    generate_newsletter_content,
 )
 
 # Use the real templates directory
@@ -79,7 +77,7 @@ def test_generate_newsletter_content_no_articles():
 
 def test_generate_newsletter_content_adds_surrounding_area_reference():
     content = generate_newsletter_content([
-        _article(title="Payroll security for small business", url="https://example.com/payroll")
+        _article(title="Cyber safety basics for local families", url="https://example.com/cyber-basics")
     ])
     assert "Perth County" in content or "Stratford" in content
 
@@ -93,28 +91,27 @@ def test_generate_newsletter_content_keeps_minimum_cyber_actions():
     assert hits >= 3
 
 
-def test_generate_newsletter_content_aligns_payroll_topic_sections():
+def test_generate_newsletter_content_aligns_video_topic_sections():
     content = generate_newsletter_content([
-        _article(title="Key Features of Kelly Payroll Services", url="https://example.com/payroll")
+        _article(title="How to improve video call quality at home", url="https://example.com/video")
     ])
     lowered = content.lower()
-    assert "payroll" in lowered
-    assert "video call" not in lowered
+    assert "video call" in lowered
 
 
 def test_generate_newsletter_content_selects_best_feature_from_top_candidates():
     articles = [
         _article(title="Market update", url="https://example.com/market", summary="General recap"),
         _article(
-            title="Key Features of Kelly Payroll Services",
-            url="https://example.com/payroll",
-            summary="Payroll automation and tax remittance for small business owners",
+            title="Digital confidence workshop for local seniors",
+            url="https://example.com/confidence-workshop",
+            summary="Digital literacy and online safety support for neighbours",
         ),
         _article(title="Town notice", url="https://example.com/town", summary="Local bulletin"),
     ]
     content = generate_newsletter_content(articles)
-    assert "https://example.com/payroll" in content
-    assert "payroll confidence" in content.lower()
+    assert "https://example.com/confidence-workshop" in content
+    assert "digital confidence" in content.lower()
 
 
 def test_generate_newsletter_content_deprioritizes_announcement_headlines():
@@ -125,14 +122,14 @@ def test_generate_newsletter_content_deprioritizes_announcement_headlines():
             summary="Corporate announcement and board update",
         ),
         _article(
-            title="Simple payroll checklist for local shops",
-            url="https://example.com/checklist",
-            summary="Payroll deductions and tax remittance steps for small business",
+            title="Simple cyber checklist for local shops",
+            url="https://example.com/cyber-checklist",
+            summary="Online safety, password hygiene, and phishing prevention for small business",
         ),
     ]
     content = generate_newsletter_content(articles)
-    assert "https://example.com/checklist" in content
-    assert "payroll" in content.lower()
+    assert "https://example.com/cyber-checklist" in content
+    assert "cyber" in content.lower() or "online safety" in content.lower()
 
 
 def test_generate_newsletter_content_prioritizes_digital_confidence_theme():
@@ -160,9 +157,9 @@ def test_generate_newsletter_content_rotates_among_top_scored_by_day():
             summary="Bridge the digital divide with local tech support",
         ),
         _article(
-            title="Simple payroll checklist for local shops",
-            url="https://example.com/payroll",
-            summary="Payroll and tax remittance steps",
+            title="Simple cyber checklist for local shops",
+            url="https://example.com/cyber-checklist",
+            summary="Phishing prevention and password hygiene steps",
         ),
         _article(
             title="How to avoid phishing scams",
@@ -176,7 +173,7 @@ def test_generate_newsletter_content_rotates_among_top_scored_by_day():
 
     links = {
         "https://example.com/confidence": ("https://example.com/confidence" in day_one, "https://example.com/confidence" in day_two),
-        "https://example.com/payroll": ("https://example.com/payroll" in day_one, "https://example.com/payroll" in day_two),
+        "https://example.com/cyber-checklist": ("https://example.com/cyber-checklist" in day_one, "https://example.com/cyber-checklist" in day_two),
         "https://example.com/cyber": ("https://example.com/cyber" in day_one, "https://example.com/cyber" in day_two),
     }
     # Different days should rotate to a different feature option.
@@ -199,6 +196,22 @@ def test_generate_newsletter_content_expands_scan_for_practical_alignment():
 
     content = generate_newsletter_content(articles, edition_date=date(2026, 4, 1))
     assert "https://example.com/practical" in content
+
+
+def test_generate_newsletter_content_varies_opening_and_closing_by_date():
+    articles = [
+        _article(
+            title="Digital confidence basics for local families",
+            url="https://example.com/confidence-basics",
+            summary="Digital literacy and online safety",
+        )
+    ]
+    content_day_one = generate_newsletter_content(articles, edition_date=date(2026, 4, 1))
+    content_day_two = generate_newsletter_content(articles, edition_date=date(2026, 4, 2))
+
+    assert content_day_one != content_day_two
+    assert "Technology has no age; it only needs empathy." in content_day_one
+    assert "Technology has no age; it only needs empathy." in content_day_two
 
 
 # ── save_newsletter ───────────────────────────────────────────────────────────

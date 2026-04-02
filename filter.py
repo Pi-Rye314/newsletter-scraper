@@ -12,10 +12,10 @@ from typing import Iterable
 from config import (
     ALL_KEYWORDS,
     MAX_ARTICLES,
+    NEGATIVE_KEYWORDS,
     ONTARIO_KEYWORDS,
     SENIOR_KEYWORDS,
     SMB_KEYWORDS,
-    NEGATIVE_KEYWORDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,10 +40,7 @@ _NEGATIVE_PATTERNS = _make_patterns(NEGATIVE_KEYWORDS)
 
 def _text_matches(text: str, patterns: list[re.Pattern]) -> bool:
     """Return True if *text* contains at least one keyword pattern."""
-    for pattern in patterns:
-        if pattern.search(text):
-            return True
-    return False
+    return any(pattern.search(text) for pattern in patterns)
 
 
 def is_relevant(article: dict, patterns: list[re.Pattern] | None = None) -> bool:

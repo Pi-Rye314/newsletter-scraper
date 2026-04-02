@@ -2,16 +2,13 @@
 Tests for filter.py
 """
 
+import os
 import re
 import sys
-import os
-
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from filter import is_relevant, filter_articles, _is_fresh
-
+from filter import _is_fresh, filter_articles, is_relevant
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
