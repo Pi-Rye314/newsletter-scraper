@@ -6,8 +6,8 @@ with support for trusted feeds, stale article pruning, and audience-specific gat
 
 import logging
 import re
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
-from typing import Iterable
 
 from config import (
     ALL_KEYWORDS,

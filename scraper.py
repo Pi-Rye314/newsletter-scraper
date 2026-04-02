@@ -37,7 +37,7 @@ def _clean_text(value: str) -> str:
     return text
 
 
-def _parse_date(entry: Any) -> Optional[datetime]:  # feedparser.FeedParserDict lacks stubs
+def _parse_date(entry: Any) -> datetime | None:  # feedparser.FeedParserDict lacks stubs
     """Return a timezone-aware datetime from a parsed feed entry, or None."""
     if hasattr(entry, "published_parsed") and entry.published_parsed:  # type: ignore[attr-defined]
         try:

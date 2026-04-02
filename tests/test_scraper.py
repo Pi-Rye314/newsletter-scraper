@@ -148,7 +148,7 @@ def test_fetch_feed_returns_empty_on_network_error():
     import socket
 
     def _raise(*args, **kwargs):
-        raise socket.timeout("timed out")
+        raise TimeoutError("timed out")
 
     with patch("scraper.urllib.request.urlopen", _raise):
         articles = fetch_feed({"name": "Slow Feed", "url": "https://example.com/slow"})
